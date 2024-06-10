@@ -49,6 +49,12 @@
 									<listOptionValue builtIn="false" value="../Drivers/CMSIS/Device/ST/STM32F4xx/Include"/>
 									<listOptionValue builtIn="false" value="../Drivers/CMSIS/Include"/>
 									<listOptionValue builtIn="false" value="&quot;C:\STM32-IDE\STM32-Library\BKP_REG&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;C:\STM32-IDE\STM32-Library\ESP8266&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;C:\STM32-IDE\STM32-Library\HTTP&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;C:\STM32-IDE\STM32-Library\LoRa&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;C:\STM32-IDE\STM32-Library\ModBUS&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;C:\STM32-IDE\STM32-Library\STM32_ETH_W5100&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;C:\STM32-IDE\STM32-Library\STRING&quot;"/>
 								</option>
 								<inputType id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.input.c.110277890" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.input.c"/>
 							</tool>
@@ -78,6 +84,12 @@
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="BKP_REG"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Core"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="Drivers"/>
+						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="ESP8266"/>
+						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="HTTP"/>
+						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="LoRa"/>
+						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="ModBUS"/>
+						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="STM32_ETH_W5100"/>
+						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="STRING"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>

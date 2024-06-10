@@ -18,7 +18,16 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-//#include "BKP_REG.h"
+#include "BKP_REG.h"
+#include "string.h"
+#include "stdio.h"
+#include "ESP8266_Chelo.h"
+#include "ModBUS_Chelo.h"
+#include "STR_Chelo.h"
+#include "ETH_W5100.h"
+#include "http.h"
+#include "string.h"
+#include "RYLR896.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -37,7 +46,7 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
+#define ITM_Port32(n)   (*((volatile unsigned long *)(0xE0000000+4*n)))
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -51,8 +60,23 @@ UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 UART_HandleTypeDef huart6;
 
+struct LoRa lr;
+struct WIFI wf;
+struct W5100_SPI ETH;
+struct MBUS mb_lr;
+
 /* USER CODE BEGIN PV */
-uint16_t data[20];
+uint32_t dataRTC[20];
+
+char 	WIFI_NET[]="PLC_DEV",//WIFI_NET[]="Fibertel WiFi967 2.4GHz",//WIFI_NET[]="PLC_DEV",//
+		WIFI_PASS[]="12345678",//WIFI_PASS[]="0042880756",//WIFI_PASS[]="12345678",//
+		TCP_SERVER[]="192.168.0.91",//TCP_SERVER[]="192.168.0.65",//TCP_SERVER[]="192.168.0.102",//TCP_SERVER[]="192.168.0.47",
+		TCP_PORT[]="8000",//TCP_PORT[]="502",
+		TCP_SERVER_LOCAL[]="192.168.0.33",//TCP_SERVER[]="192.168.0.47",
+		TCP_SERVER_LOCAL_GWY[]="192.168.0.99",//TCP_SERVER[]="192.168.0.47",
+		TCP_SERVER_LOCAL_MSK[]="255.255.255.0",//TCP_SERVER[]="192.168.0.47",
+		TCP_PORT_LOCAL[]="502";
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -82,6 +106,91 @@ int main(void)
 
   /* USER CODE BEGIN 1 */
 
+	  //----------------------- WIFI ------------------------//
+	  	Inicializar(&wf); 									//Borra todos los registros de la estructura
+	  	wf.RESET_PORT=GPIOA;
+	  	wf.RESET_PIN=GPIO_PIN_8;
+		strcpy(wf._WF_Net, WIFI_NET);						//Nombre de la red WIFI  a conectar Fibertel WiFi967 2.4GHz
+		strcpy(wf._WF_Pass, WIFI_PASS);						//Password de la red WIFI
+		strcpy(wf._TCP_Remote_Server_IP, TCP_SERVER);		//char _TCP_Remote_Server_IP[16];		//IP del Servidor TCP
+		strcpy(wf._TCP_Remote_Server_Port, TCP_PORT);		//char _TCP_Remote_Server_Port[16];			//Puerto del Servidor TCP
+		strcpy(wf._TCP_Local_Server_IP, TCP_SERVER_LOCAL);
+		strcpy(wf._TCP_Local_Server_GWY, TCP_SERVER_LOCAL_GWY);
+		strcpy(wf._TCP_Local_Server_MSK, TCP_SERVER_LOCAL_MSK);
+		strcpy(wf._TCP_Local_Server_Port, TCP_PORT_LOCAL);
+		wf._TCP_Local_Server_EN=0;							//Habilito el Servidor Local
+		wf._estado_conexion=100;//Si no se define no arranca	//wf._estado_conexion=1;					//Arranco en WiFi Desconectado
+		wf._automatizacion=WF_CONNECT_TCP;//wf._automatizacion=WF_SEND;
+		wf._NO_IP=1;
+		wf._DBG_EN=1;
+	//----------------------- WIFI ------------------------//
+	//---------------------- ModBUS -----------------------//
+
+		ModBUS_Config(&mb_lr);		//ETHERNET como cliente TCP envía  ModBUS
+		mb_lr._mode = CLIENTE;
+
+	//---------------------- ModBUS -----------------------//
+	//----------------------- ETHERNET W5100 Environment-------------------------//
+
+	//	GATEWAY ADDRESS
+		ETH.GAR[0]=192;
+		ETH.GAR[1]=168;
+		ETH.GAR[2]=0;
+		ETH.GAR[3]=1;
+	//	SUBNET MASK
+		ETH.SUBR[0]=255;
+		ETH.SUBR[1]=255;
+		ETH.SUBR[2]=255;
+		ETH.SUBR[3]=0;
+	//	MAC ADDRESS
+		ETH.SHAR[0]=0x00;
+		ETH.SHAR[1]=0x08;
+		ETH.SHAR[2]=0xDC;
+		ETH.SHAR[3]=0x00;
+		ETH.SHAR[4]=0x00;
+		ETH.SHAR[5]=0x01;
+	//	IP ADDRESS
+		ETH.SIPR[0]=192;
+		ETH.SIPR[1]=168;
+		ETH.SIPR[2]=0;
+		ETH.SIPR[3]=34;//ETH.SIPR[3]=6,
+	//  Socket RX memory
+		ETH.RMSR=0x55;
+	//  Socket TX memory
+		ETH.TMSR=0x55;
+	//  S0 Port Number
+		ETH.S0_PORT[0]=0x01;
+		ETH.S0_PORT[1]=0xF6;
+	//	S0 Client IP ADDRESS
+		ETH.S0_DIPR[0]=192;
+		ETH.S0_DIPR[1]=168;
+		ETH.S0_DIPR[2]=0;
+		ETH.S0_DIPR[3]=3;//=3;
+	//	S0 Client IP Port
+		ETH.S0_DPORT[0]=0x01;
+		ETH.S0_DPORT[1]=0xF6;
+
+		ETH.gS0_RX_BASE = 0x6000;
+		ETH.gS0_RX_MASK = 0x07FF;
+		ETH.gS1_RX_BASE = 0x6800;
+		ETH.gS1_RX_MASK = 0x07FF;
+		ETH.gS2_RX_BASE = 0x7000;
+		ETH.gS2_RX_MASK = 0x07FF;
+		ETH.gS3_RX_BASE = 0x7800;
+		ETH.gS3_RX_MASK = 0x07FF;
+		ETH.gS0_TX_BASE = 0x4000;
+		ETH.gS0_TX_MASK = 0x07FF;
+		ETH.gS1_TX_BASE = 0x4800;
+		ETH.gS1_TX_MASK = 0x07FF;
+		ETH.gS2_TX_BASE = 0x5000;
+		ETH.gS2_TX_MASK = 0x07FF;
+		ETH.gS3_TX_BASE = 0x5800;
+		ETH.gS3_TX_MASK = 0x07FF;
+
+		ETH.S0_ENserver = 0;			//Actúa como servidor S0_ENserver=1 o cliente S0_ENserver=0
+
+	//----------------------- ETHERNET W5100 Environment-------------------------//
+
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -110,7 +219,18 @@ int main(void)
   MX_RTC_Init();
 
   /* USER CODE BEGIN 2 */
-
+  ITM0_Write("\r\n ARRANQUE",strlen("\r\n ARRANQUE"));
+  /*
+  dataRTC[3]=128;
+  BKP_REG_blk(&hrtc, WRITE , 20, dataRTC );
+  dataRTC[3]=0;
+  BKP_REG_blk(&hrtc, READ , 20, dataRTC );
+  */
+  BKP_REG_blk(&hrtc, READ , 20, dataRTC );
+  if(dataRTC[3]==128)
+  {
+	  ITM0_Write("\r\n Valor guardado en RTC ",strlen("\r\n Valor guardado en RTC "));
+  }
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -120,28 +240,8 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  /*
-	  if (HAL_RTCEx_BKUPRead(&hrtc, RTC_BKP_DR0) != 0xBEBE)
-	    {
-	       // Write Back Up Register 1 Data
-	       HAL_PWR_EnableBkUpAccess();
-	       // Writes a data in a RTC Backup data Register 1
-	       HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, 0xBEBE);
-
-	       HAL_PWR_DisableBkUpAccess();
 
 
-	       //Turn LED2
-	       HAL_GPIO_WritePin(GPIOB, LD2_Pin, GPIO_PIN_SET);
-
-	    }
-	    else
-	    {
-	       // data register already written so turn LED3
-	       HAL_GPIO_WritePin(GPIOB, LD3_Pin, GPIO_PIN_SET);
-
-	    }
-	    */
   }
   /* USER CODE END 3 */
 }
@@ -507,17 +607,15 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 
-void WriteBackupRegister(uint32_t BackupRegister, uint32_t Data) {
-    if (BackupRegister <= 19) {
-        //RTC->BKP0R + (BackupRegister * 4) = Data;
-    }
-}
+int ITM0_Write( char *ptr, int len)
+{
+ int DataIdx;
 
-uint32_t ReadBackupRegister(uint32_t BackupRegister) {
-    if (BackupRegister <= 19) {
-        return RTC->BKP0R + (BackupRegister * 4);
-    }
-    return 0;
+  for(DataIdx=0; DataIdx<len; DataIdx++)
+  {
+    ITM_SendChar(*ptr++);
+  }
+  return len;
 }
 
 
