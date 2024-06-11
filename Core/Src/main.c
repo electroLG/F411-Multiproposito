@@ -220,13 +220,19 @@ int main(void)
 
   /* USER CODE BEGIN 2 */
   ITM0_Write("\r\n ARRANQUE",strlen("\r\n ARRANQUE"));
-  /*
+
   dataRTC[3]=128;
   BKP_REG_blk(&hrtc, WRITE , 20, dataRTC );
   dataRTC[3]=0;
   BKP_REG_blk(&hrtc, READ , 20, dataRTC );
-  */
+
   BKP_REG_blk(&hrtc, READ , 20, dataRTC );
+
+  BKP_RG_IP(&hrtc, WRITE, 0, TCP_SERVER);
+  BKP_RG_IP(&hrtc, WRITE, 1, TCP_SERVER_LOCAL);
+  BKP_RG_IP(&hrtc, WRITE, 2, TCP_SERVER_LOCAL_GWY);
+  BKP_RG_IP(&hrtc, WRITE, 3, TCP_SERVER_LOCAL_MSK);
+
   if(dataRTC[3]==128)
   {
 	  ITM0_Write("\r\n Valor guardado en RTC ",strlen("\r\n Valor guardado en RTC "));
