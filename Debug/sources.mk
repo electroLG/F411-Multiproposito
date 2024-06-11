@@ -26,4 +26,10 @@ BKP_REG \
 Core/Src \
 Core/Startup \
 Drivers/STM32F4xx_HAL_Driver/Src \
+ESP8266 \
+HTTP \
+LoRa \
+ModBUS \
+STM32_ETH_W5100 \
+STRING \
 
