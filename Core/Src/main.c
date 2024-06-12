@@ -75,7 +75,14 @@ char 	WIFI_NET[]="PLC_DEV",//WIFI_NET[]="Fibertel WiFi967 2.4GHz",//WIFI_NET[]="
 		TCP_SERVER_LOCAL[]="192.168.0.33",//TCP_SERVER[]="192.168.0.47",
 		TCP_SERVER_LOCAL_GWY[]="192.168.0.99",//TCP_SERVER[]="192.168.0.47",
 		TCP_SERVER_LOCAL_MSK[]="255.255.255.0",//TCP_SERVER[]="192.168.0.47",
-		TCP_PORT_LOCAL[]="502";
+		TCP_PORT_LOCAL[]="502",
+		READ_FUNCTION_1[16],
+		READ_FUNCTION_2[16],
+
+		READ_HLF_FUNC_1[8],
+		READ_HLF_FUNC_2[8];
+
+
 
 /* USER CODE END PV */
 
@@ -224,14 +231,20 @@ int main(void)
   dataRTC[3]=128;
   BKP_REG_blk(&hrtc, WRITE , 20, dataRTC );
   dataRTC[3]=0;
-  BKP_REG_blk(&hrtc, READ , 20, dataRTC );
+  //BKP_REG_blk(&hrtc, READ , 20, dataRTC );
 
   BKP_REG_blk(&hrtc, READ , 20, dataRTC );
 
   BKP_RG_IP(&hrtc, WRITE, 0, TCP_SERVER);
   BKP_RG_IP(&hrtc, WRITE, 1, TCP_SERVER_LOCAL);
-  BKP_RG_IP(&hrtc, WRITE, 2, TCP_SERVER_LOCAL_GWY);
-  BKP_RG_IP(&hrtc, WRITE, 3, TCP_SERVER_LOCAL_MSK);
+  BKP_RG_IP(&hrtc, WRITE, 3, TCP_SERVER_LOCAL_GWY);
+  BKP_RG_IP(&hrtc, WRITE, 4, TCP_SERVER_LOCAL_MSK);
+
+  BKP_RG_IP(&hrtc, READ, 0, READ_FUNCTION_1);
+  BKP_RG_IP(&hrtc, READ, 1, READ_FUNCTION_2);
+
+  BKP_RG_2int(&hrtc, WRITE , 2 , TCP_PORT ,TCP_PORT_LOCAL );
+  BKP_RG_2int(&hrtc, READ , 2 , READ_HLF_FUNC_1 ,READ_HLF_FUNC_2 );
 
   if(dataRTC[3]==128)
   {
