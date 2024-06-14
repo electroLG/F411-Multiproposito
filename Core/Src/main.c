@@ -123,12 +123,18 @@ char	UART_RX_vect[1024],
 		UART2_RX_vect[512],
 		UART6_RX_vect[512],
 		UART_RX_vect_hld[1024],
+		UART2_RX_vect_hld[1024],
+		UART6_RX_vect_hld[1024],
 		CMP_VECT[]="\0",
 		UART_RX_byte[2],
 		UART2_RX_byte[2],
 		UART6_RX_byte[2];
 
 int 	//wf_snd_flag_ticks=0,
+		dummy=0,
+		dummy2=11,
+		dummy3=27,
+		dummy4=5,
 		UART_RX_items=0,
 		UART2_RX_items=0,
 		UART6_RX_items=0,
@@ -329,7 +335,7 @@ int main(void)
 	//------------------ Habilitacion de dispositivos ---------------//
 
 	  HAL_GPIO_WritePin(GPIOB, LR_RST_Pin, GPIO_PIN_SET);		//Habilito LoRa
-	  HAL_GPIO_WritePin(GPIOB, MBUS_CTRL_Pin, GPIO_PIN_RESET);	//Habilito 485 para RX
+	  HAL_GPIO_WritePin(GPIOA, MBUS_CTRL_Pin, GPIO_PIN_RESET);	//Habilito 485 para RX
 	  HAL_GPIO_WritePin(GPIOA, WF_EN_RST_Pin, GPIO_PIN_SET);	//Habilito WiFi
 
 
@@ -346,6 +352,41 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
+	  if(FLAG_UART1==1)
+	  {
+		  ITM0_Write("\r\nRX UART1",strlen("\r\nRX UART1"));
+		  if(FT_String_ND(UART_RX_vect_hld,&UART_RX_items,"WIFI GOT IP",&dummy2,wf._uartRCVD_tok,wf._n_tok,&dummy,wf._id_conn,wf._overflowVector,FIND)==1)
+		  {
+			  HAL_UART_Transmit(&huart1,"AT+CIPSTA?\r\n", 12, 100);
+		  }
+		  int dummy3=8;
+		  if(FT_String_ND(UART_RX_vect_hld,&UART_RX_items,"+CIPSTA:",&dummy3,wf._uartRCVD_tok,wf._n_tok,&dummy,wf._id_conn,wf._overflowVector,FIND)==1)
+		  {
+			  HAL_UART_Transmit(&huart1,"AT+CIPSTART=\"TCP\",\"192.168.0.91\",8000\r\n", 39, 100);
+		  }
+
+		  FLAG_UART1=0;
+	  }
+	  if(FLAG_UART2==1)
+	  {
+		  ITM0_Write("\r\nRX UART2",strlen("\r\nRX UART2"));
+		  if(FT_String_ND(UART2_RX_vect_hld,&UART2_RX_items,"PRUEBA DE RECEPCION VIA 485",&dummy3,wf._uartRCVD_tok,wf._n_tok,&dummy,wf._id_conn,wf._overflowVector,FIND)==1)
+		  {
+			  HAL_GPIO_WritePin(GPIOA, MBUS_CTRL_Pin, GPIO_PIN_SET);	//Habilito 485 para TX
+			  HAL_UART_Transmit(&huart2,"TX VIA RS-485\r\n", 15, 100);
+			  HAL_GPIO_WritePin(GPIOA, MBUS_CTRL_Pin, GPIO_PIN_RESET);	//Habilito 485 para RX
+		  }
+		  FLAG_UART2=0;
+	  }
+	  if(FLAG_UART6==1)
+	  {
+		  ITM0_Write("\r\nRX UART6",strlen("\r\nRX UART6"));
+		  if(FT_String_ND(UART6_RX_vect_hld,&UART6_RX_items,"+RCV",&dummy4,wf._uartRCVD_tok,wf._n_tok,&dummy,wf._id_conn,wf._overflowVector,FIND)==1)
+		  {
+			  HAL_UART_Transmit(&huart6,"AT\r\n", 4, 100);
+		  }
+		  FLAG_UART6=0;
+	  }
 
   }
   /* USER CODE END 3 */
@@ -866,12 +907,19 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(Q0_0_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : Q0_1_Pin MBUS_CTRL_Pin WF_EN_RST_Pin DBG_PIN_Pin */
-  GPIO_InitStruct.Pin = Q0_1_Pin|MBUS_CTRL_Pin|WF_EN_RST_Pin|DBG_PIN_Pin;
+  /*Configure GPIO pins : Q0_1_Pin WF_EN_RST_Pin DBG_PIN_Pin */
+  GPIO_InitStruct.Pin = Q0_1_Pin|WF_EN_RST_Pin|DBG_PIN_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : MBUS_CTRL_Pin */
+  GPIO_InitStruct.Pin = MBUS_CTRL_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(MBUS_CTRL_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : A3V3_Pin A5V_Pin IA0_Pin IA1_Pin */
   GPIO_InitStruct.Pin = A3V3_Pin|A5V_Pin|IA0_Pin|IA1_Pin;
@@ -983,8 +1031,7 @@ void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *TIMER)
 				 UART2_RX_items=UART2_RX_pos;
 				 UART2_RX_pos=0;
 				 UART2_RX_vect[512]='\0'; //Finalizo el vector a la fuerza ya que recibo hasta 124
-				 CopiaVector(lr.rxbuff,UART2_RX_vect,UART2_RX_items,1,CMP_VECT);
-				 lr.rxitems=UART2_RX_items;
+				 CopiaVector(UART2_RX_vect_hld,UART2_RX_vect,UART2_RX_items,1,CMP_VECT);
 				 HAL_UART_Receive_IT(&huart2,(uint8_t *)UART2_RX_byte,1); //Habilito le recepcón de puerto serie al terminar
 				 if (wf._DBG_EN==1)
 				 {
@@ -1004,9 +1051,8 @@ void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *TIMER)
 				 UART6_RX_items=UART6_RX_pos;
 				 UART6_RX_pos=0;
 				 UART6_RX_vect[512]='\0'; //Finalizo el vector a la fuerza ya que recibo hasta 124
-				 CopiaVector(lr.rxbuff,UART2_RX_vect,UART2_RX_items,1,CMP_VECT);
-				 lr.rxitems=UART2_RX_items;
-				 HAL_UART_Receive_IT(&huart2,(uint8_t *)UART2_RX_byte,1); //Habilito le recepcón de puerto serie al terminar
+				 CopiaVector(UART6_RX_vect_hld,UART6_RX_vect,UART6_RX_items,1,CMP_VECT);
+				 HAL_UART_Receive_IT(&huart6,(uint8_t *)UART6_RX_byte,1); //Habilito le recepcón de puerto serie al terminar
 				 if (wf._DBG_EN==1)
 				 {
 					 ITM0_Write("\r\nData LoRa recibida = ",strlen("\r\nData LoRa recibida = "));
