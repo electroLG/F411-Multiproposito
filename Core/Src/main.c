@@ -18,6 +18,9 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+
+/* Private includes ----------------------------------------------------------*/
+/* USER CODE BEGIN Includes */
 #include "BKP_REG.h"
 #include "string.h"
 #include "stdio.h"
@@ -28,10 +31,6 @@
 #include "http.h"
 #include "string.h"
 #include "RYLR896.h"
-
-/* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */
-
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -56,32 +55,100 @@ RTC_HandleTypeDef hrtc;
 
 SPI_HandleTypeDef hspi3;
 
+TIM_HandleTypeDef htim2;
+TIM_HandleTypeDef htim3;
+TIM_HandleTypeDef htim4;
+
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 UART_HandleTypeDef huart6;
+
+/* USER CODE BEGIN PV */
 
 struct LoRa lr;
 struct WIFI wf;
 struct W5100_SPI ETH;
 struct MBUS mb_lr;
 
-/* USER CODE BEGIN PV */
 uint32_t dataRTC[20];
 
-char 	WIFI_NET[]="PLC_DEV",//WIFI_NET[]="Fibertel WiFi967 2.4GHz",//WIFI_NET[]="PLC_DEV",//
-		WIFI_PASS[]="12345678",//WIFI_PASS[]="0042880756",//WIFI_PASS[]="12345678",//
-		TCP_SERVER[]="192.168.0.91",//TCP_SERVER[]="192.168.0.65",//TCP_SERVER[]="192.168.0.102",//TCP_SERVER[]="192.168.0.47",
-		TCP_PORT[]="8000",//TCP_PORT[]="502",
-		TCP_SERVER_LOCAL[]="192.168.0.33",//TCP_SERVER[]="192.168.0.47",
-		TCP_SERVER_LOCAL_GWY[]="192.168.0.99",//TCP_SERVER[]="192.168.0.47",
-		TCP_SERVER_LOCAL_MSK[]="255.255.255.0",//TCP_SERVER[]="192.168.0.47",
+int		mseg=0; //conteo de milisegundos
+
+char 	WIFI_NET[]="PLC_DEV",					//WIFI_NET[]="Fibertel WiFi967 2.4GHz",//WIFI_NET[]="PLC_DEV",//
+		WIFI_PASS[]="12345678",					//WIFI_PASS[]="0042880756",//WIFI_PASS[]="12345678",//
+		TCP_SERVER[]="192.168.0.91",			//TCP_SERVER[]="192.168.0.65",//TCP_SERVER[]="192.168.0.102",//TCP_SERVER[]="192.168.0.47",
+		TCP_PORT[]="8000",						//TCP_PORT[]="502",
+		TCP_SERVER_LOCAL[]="192.168.0.33",		//TCP_SERVER[]="192.168.0.47",
+		TCP_SERVER_LOCAL_GWY[]="192.168.0.99",	//TCP_SERVER[]="192.168.0.47",
+		TCP_SERVER_LOCAL_MSK[]="255.255.255.0",	//TCP_SERVER[]="192.168.0.47",
 		TCP_PORT_LOCAL[]="502",
+
 		READ_FUNCTION_1[16],
 		READ_FUNCTION_2[16],
 
 		READ_HLF_FUNC_1[8],
 		READ_HLF_FUNC_2[8];
 
+/*char post[512];
+char body[512];
+char ENDPOINT[]="/logdata",//ENDPOINT[]="/tepelco",
+     SERVER_IP[]="192.168.0.91",
+     PORT[]="8000";*/
+
+uint8_t EN_UART1_TMR=0,
+		EN_UART2_TMR=0,
+		EN_UART6_TMR=0,
+		FLAG_UART1=0,
+		FLAG_UART2=0,
+		FLAG_UART6=0;
+		/*decimal[17],
+		error=0,
+		ESP_REinit=0,			//Conteo de intentos de incializacion
+		ESP_InitF=0,			//Flag de error por no encontrar la sentencia
+		ESP_HW_Init=0,
+		FLAG_TIMEOUT=0,
+		resultado=0,
+		error_rxdata=0,
+		esp_restart=0,
+		conexion,
+		WF_SND_FLAG=0;*/
+
+//uint16_t datos[]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+
+/*uint32_t ms_ticks=0,
+		 min_ticks=0;*/
+
+
+char	UART_RX_vect[1024],
+		UART2_RX_vect[512],
+		UART6_RX_vect[512],
+		UART_RX_vect_hld[1024],
+		UART2_RX_vect_hld[1024],
+		UART6_RX_vect_hld[1024],
+		CMP_VECT[]="\0",
+		UART_RX_byte[2],
+		UART2_RX_byte[2],
+		UART6_RX_byte[2];
+
+int 	//wf_snd_flag_ticks=0,
+		dummy=0,
+		dummy2=11,
+		dummy3=27,
+		dummy4=5,
+		UART_RX_items=0,
+		UART2_RX_items=0,
+		UART6_RX_items=0,
+		UART_RX_pos=0,
+		UART2_RX_pos=0,
+		UART6_RX_pos=0;
+		//ESP_ticks=0,
+		//MB_TOUT_ticks=0,
+		//ticks=0,
+		//ntestc=0,
+		//uart1pass=0,
+		//USART1_ticks=0,
+		//FLAG_USART1=0,
+		//items_rx=0;
 
 
 /* USER CODE END PV */
@@ -95,6 +162,9 @@ static void MX_USART1_UART_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_USART6_UART_Init(void);
 static void MX_RTC_Init(void);
+static void MX_TIM2_Init(void);
+static void MX_TIM3_Init(void);
+static void MX_TIM4_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -112,6 +182,7 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
+
 
 	  //----------------------- WIFI ------------------------//
 	  	Inicializar(&wf); 									//Borra todos los registros de la estructura
@@ -198,6 +269,8 @@ int main(void)
 
 	//----------------------- ETHERNET W5100 Environment-------------------------//
 
+
+
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -224,7 +297,9 @@ int main(void)
   MX_USART2_UART_Init();
   MX_USART6_UART_Init();
   MX_RTC_Init();
-
+  MX_TIM2_Init();
+  MX_TIM3_Init();
+  MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
   ITM0_Write("\r\n ARRANQUE",strlen("\r\n ARRANQUE"));
 
@@ -250,6 +325,23 @@ int main(void)
   {
 	  ITM0_Write("\r\n Valor guardado en RTC ",strlen("\r\n Valor guardado en RTC "));
   }
+
+  HAL_UART_Receive_IT(&huart1,(uint8_t *)UART_RX_byte,1);
+  HAL_UART_Receive_IT(&huart2,(uint8_t *)UART2_RX_byte,1);
+  HAL_UART_Receive_IT(&huart6,(uint8_t *)UART6_RX_byte,1);
+  ITM0_Write("\r\nPuerto serie en escucha",strlen("\r\nPuerto serie en escucha"));
+
+
+	//------------------ Habilitacion de dispositivos ---------------//
+
+	  HAL_GPIO_WritePin(GPIOB, LR_RST_Pin, GPIO_PIN_SET);		//Habilito LoRa
+	  HAL_GPIO_WritePin(GPIOA, MBUS_CTRL_Pin, GPIO_PIN_RESET);	//Habilito 485 para RX
+	  HAL_GPIO_WritePin(GPIOA, WF_EN_RST_Pin, GPIO_PIN_SET);	//Habilito WiFi
+
+
+	//------------------ Habilitacion de dispositivos ---------------//
+
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -260,6 +352,41 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
+	  if(FLAG_UART1==1)
+	  {
+		  ITM0_Write("\r\nRX UART1",strlen("\r\nRX UART1"));
+		  if(FT_String_ND(UART_RX_vect_hld,&UART_RX_items,"WIFI GOT IP",&dummy2,wf._uartRCVD_tok,wf._n_tok,&dummy,wf._id_conn,wf._overflowVector,FIND)==1)
+		  {
+			  HAL_UART_Transmit(&huart1,"AT+CIPSTA?\r\n", 12, 100);
+		  }
+		  int dummy3=8;
+		  if(FT_String_ND(UART_RX_vect_hld,&UART_RX_items,"+CIPSTA:",&dummy3,wf._uartRCVD_tok,wf._n_tok,&dummy,wf._id_conn,wf._overflowVector,FIND)==1)
+		  {
+			  HAL_UART_Transmit(&huart1,"AT+CIPSTART=\"TCP\",\"192.168.0.91\",8000\r\n", 39, 100);
+		  }
+
+		  FLAG_UART1=0;
+	  }
+	  if(FLAG_UART2==1)
+	  {
+		  ITM0_Write("\r\nRX UART2",strlen("\r\nRX UART2"));
+		  if(FT_String_ND(UART2_RX_vect_hld,&UART2_RX_items,"PRUEBA DE RECEPCION VIA 485",&dummy3,wf._uartRCVD_tok,wf._n_tok,&dummy,wf._id_conn,wf._overflowVector,FIND)==1)
+		  {
+			  HAL_GPIO_WritePin(GPIOA, MBUS_CTRL_Pin, GPIO_PIN_SET);	//Habilito 485 para TX
+			  HAL_UART_Transmit(&huart2,"TX VIA RS-485\r\n", 15, 100);
+			  HAL_GPIO_WritePin(GPIOA, MBUS_CTRL_Pin, GPIO_PIN_RESET);	//Habilito 485 para RX
+		  }
+		  FLAG_UART2=0;
+	  }
+	  if(FLAG_UART6==1)
+	  {
+		  ITM0_Write("\r\nRX UART6",strlen("\r\nRX UART6"));
+		  if(FT_String_ND(UART6_RX_vect_hld,&UART6_RX_items,"+RCV",&dummy4,wf._uartRCVD_tok,wf._n_tok,&dummy,wf._id_conn,wf._overflowVector,FIND)==1)
+		  {
+			  HAL_UART_Transmit(&huart6,"AT\r\n", 4, 100);
+		  }
+		  FLAG_UART6=0;
+	  }
 
   }
   /* USER CODE END 3 */
@@ -450,7 +577,7 @@ static void MX_SPI3_Init(void)
   hspi3.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi3.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi3.Init.NSS = SPI_NSS_SOFT;
-  hspi3.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
+  hspi3.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_4;
   hspi3.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi3.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi3.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -462,6 +589,188 @@ static void MX_SPI3_Init(void)
   /* USER CODE BEGIN SPI3_Init 2 */
 
   /* USER CODE END SPI3_Init 2 */
+
+}
+
+/**
+  * @brief TIM2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM2_Init(void)
+{
+
+  /* USER CODE BEGIN TIM2_Init 0 */
+
+  /* USER CODE END TIM2_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
+
+  /* USER CODE BEGIN TIM2_Init 1 */
+
+  /* USER CODE END TIM2_Init 1 */
+  htim2.Instance = TIM2;
+  htim2.Init.Prescaler = 1000;
+  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim2.Init.Period = 20000;
+  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+  if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_OC_Init(&htim2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_OnePulse_Init(&htim2, TIM_OPMODE_SINGLE) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigOC.OCMode = TIM_OCMODE_INACTIVE;
+  sConfigOC.Pulse = 0;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  if (HAL_TIM_OC_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM2_Init 2 */
+
+  /* USER CODE END TIM2_Init 2 */
+
+}
+
+/**
+  * @brief TIM3 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM3_Init(void)
+{
+
+  /* USER CODE BEGIN TIM3_Init 0 */
+
+  /* USER CODE END TIM3_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
+
+  /* USER CODE BEGIN TIM3_Init 1 */
+
+  /* USER CODE END TIM3_Init 1 */
+  htim3.Instance = TIM3;
+  htim3.Init.Prescaler = 100;
+  htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim3.Init.Period = 150;
+  htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+  if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim3, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_OC_Init(&htim3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_OnePulse_Init(&htim3, TIM_OPMODE_SINGLE) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigOC.OCMode = TIM_OCMODE_INACTIVE;
+  sConfigOC.Pulse = 0;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  if (HAL_TIM_OC_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM3_Init 2 */
+
+  /* USER CODE END TIM3_Init 2 */
+
+}
+
+/**
+  * @brief TIM4 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM4_Init(void)
+{
+
+  /* USER CODE BEGIN TIM4_Init 0 */
+
+  /* USER CODE END TIM4_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
+
+  /* USER CODE BEGIN TIM4_Init 1 */
+
+  /* USER CODE END TIM4_Init 1 */
+  htim4.Instance = TIM4;
+  htim4.Init.Prescaler = 100;
+  htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim4.Init.Period = 150;
+  htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+  if (HAL_TIM_Base_Init(&htim4) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim4, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_OC_Init(&htim4) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim4, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigOC.OCMode = TIM_OCMODE_INACTIVE;
+  sConfigOC.Pulse = 0;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  if (HAL_TIM_OC_ConfigChannel(&htim4, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM4_Init 2 */
+
+  /* USER CODE END TIM4_Init 2 */
 
 }
 
@@ -598,12 +907,19 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(Q0_0_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : Q0_1_Pin MBUS_CTRL_Pin WF_EN_RST_Pin DBG_PIN_Pin */
-  GPIO_InitStruct.Pin = Q0_1_Pin|MBUS_CTRL_Pin|WF_EN_RST_Pin|DBG_PIN_Pin;
+  /*Configure GPIO pins : Q0_1_Pin WF_EN_RST_Pin DBG_PIN_Pin */
+  GPIO_InitStruct.Pin = Q0_1_Pin|WF_EN_RST_Pin|DBG_PIN_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : MBUS_CTRL_Pin */
+  GPIO_InitStruct.Pin = MBUS_CTRL_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(MBUS_CTRL_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : A3V3_Pin A5V_Pin IA0_Pin IA1_Pin */
   GPIO_InitStruct.Pin = A3V3_Pin|A5V_Pin|IA0_Pin|IA1_Pin;
@@ -625,6 +941,165 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+void SysTick_Handler(void)
+{
+  /* USER CODE BEGIN SysTick_IRQn 0 */
+   mseg++;
+
+   if (mseg==500)
+   {
+	   HAL_GPIO_TogglePin(GPIOB, FALLA_Pin);
+	   HAL_GPIO_TogglePin(GPIOB, CNN_Pin);
+	   HAL_GPIO_TogglePin(GPIOB, ALIM_Pin);
+	   mseg=0;
+
+   }
+  /* USER CODE END SysTick_IRQn 0 */
+  HAL_IncTick();
+  /* USER CODE BEGIN SysTick_IRQn 1 */
+
+  /* USER CODE END SysTick_IRQn 1 */
+}
+
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *INTSERIE)
+{
+
+// WiFi	USART 1 TIMER2
+	if(INTSERIE->Instance==USART1)
+		 {
+			UART_RX_vect[UART_RX_pos]=UART_RX_byte[0];
+			UART_RX_pos++;
+			if(UART_RX_pos>=1022) UART_RX_pos=1022;
+			HAL_TIM_OC_Start_IT(&htim2, TIM_CHANNEL_1);//HAL_TIM_Base_Start_IT(&htim7);	//Habilito el timer
+			TIM2->CNT=1;
+			EN_UART1_TMR=1;	//Habilito Timeout de software
+			HAL_UART_Receive_IT(INTSERIE,(uint8_t *)UART_RX_byte,1);
+		 }
+// MBUS USART2 TIMER3
+	if(INTSERIE->Instance==USART2)
+		 {
+			UART2_RX_vect[UART2_RX_pos]=UART2_RX_byte[0];
+			UART2_RX_pos++;
+			if(UART2_RX_pos>=512) UART2_RX_pos=512;
+			HAL_TIM_OC_Start_IT(&htim3, TIM_CHANNEL_1);//HAL_TIM_Base_Start_IT(&htim7);	//Habilito el timer
+			TIM3->CNT=1;
+			EN_UART2_TMR=1;	//Habilito Timeout de software
+			HAL_UART_Receive_IT(INTSERIE,(uint8_t *)UART2_RX_byte,1);
+		 }
+// LoRa/debgg USART6 TIMER3
+	if(INTSERIE->Instance==USART6)
+		 {
+			UART6_RX_vect[UART6_RX_pos]=UART6_RX_byte[0];
+			UART6_RX_pos++;
+			if(UART6_RX_pos>=512) UART6_RX_pos=512;
+			HAL_TIM_OC_Start_IT(&htim4, TIM_CHANNEL_1);//HAL_TIM_Base_Start_IT(&htim7);	//Habilito el timer
+			TIM4->CNT=1;
+			EN_UART6_TMR=1;	//Habilito Timeout de software
+			HAL_UART_Receive_IT(INTSERIE,(uint8_t *)UART6_RX_byte,1);
+		 }
+ }
+
+void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *TIMER)
+{
+// WiFi	USART 1 TIMER2
+		if(TIMER->Instance==TIM2)
+			{
+				 HAL_TIM_OC_Stop_IT(TIMER, TIM_CHANNEL_1); //Paro el timer
+				 FLAG_UART1=1;
+				 EN_UART1_TMR=0;
+				 UART_RX_items=UART_RX_pos;
+				 UART_RX_pos=0;
+				 UART_RX_vect[1022]='\0'; //Finalizo el vector a la fuerza ya que recibo hasta 124
+				 CopiaVector(UART_RX_vect_hld,UART_RX_vect,UART_RX_items,1,CMP_VECT);
+				 HAL_UART_Receive_IT(&huart1,(uint8_t *)UART_RX_byte,1); //Habilito le recepcón de puerto serie al terminar
+				 if (wf._DBG_EN==1)
+				 {
+					 ITM0_Write("\r\nData WIFI recibida = ",strlen("\r\nData WIFI recibida = "));
+					 ITM0_Write((uint8_t *)UART_RX_vect_hld,UART_RX_items);
+					 ITM0_Write("\r\n",strlen("\r\n"));
+				 }
+		}
+// MBUS USART2 TIMER3
+		if(TIMER->Instance==TIM3)
+			{
+				 HAL_TIM_OC_Stop_IT(TIMER, TIM_CHANNEL_1); //Paro el timer
+				 HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, 0);
+				 FLAG_UART2=1;
+				 EN_UART2_TMR=0;
+				 UART2_RX_items=UART2_RX_pos;
+				 UART2_RX_pos=0;
+				 UART2_RX_vect[512]='\0'; //Finalizo el vector a la fuerza ya que recibo hasta 124
+				 CopiaVector(UART2_RX_vect_hld,UART2_RX_vect,UART2_RX_items,1,CMP_VECT);
+				 HAL_UART_Receive_IT(&huart2,(uint8_t *)UART2_RX_byte,1); //Habilito le recepcón de puerto serie al terminar
+				 if (wf._DBG_EN==1)
+				 {
+					 ITM0_Write("\r\nData MBUS recibida = ",strlen("\r\nData MUS recibida = "));
+					 ITM0_Write((uint8_t *)UART2_RX_vect,UART2_RX_items);
+					 ITM0_Write("\r\n",strlen("\r\n"));
+				 }
+		}
+
+// LoRa/Debbg USART6 TIMER3
+		if(TIMER->Instance==TIM4)
+			{
+				 HAL_TIM_OC_Stop_IT(TIMER, TIM_CHANNEL_1); //Paro el timer
+				 HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, 0);
+				 FLAG_UART6=1;
+				 EN_UART6_TMR=0;
+				 UART6_RX_items=UART6_RX_pos;
+				 UART6_RX_pos=0;
+				 UART6_RX_vect[512]='\0'; //Finalizo el vector a la fuerza ya que recibo hasta 124
+				 CopiaVector(UART6_RX_vect_hld,UART6_RX_vect,UART6_RX_items,1,CMP_VECT);
+				 HAL_UART_Receive_IT(&huart6,(uint8_t *)UART6_RX_byte,1); //Habilito le recepcón de puerto serie al terminar
+				 if (wf._DBG_EN==1)
+				 {
+					 ITM0_Write("\r\nData LoRa recibida = ",strlen("\r\nData LoRa recibida = "));
+					 ITM0_Write((uint8_t *)UART6_RX_vect,UART6_RX_items);
+					 ITM0_Write("\r\n",strlen("\r\n"));
+				 }
+		}
+}
+
+void HAL_UART_ErrorCallback(UART_HandleTypeDef *ERRUART)
+
+{
+	if(ERRUART->Instance==USART1)
+	{
+		 volatile int aore=0;
+		 volatile int bore=0;
+		//Al leer los registros de esta forma SR y luego DR se resetean los errores de Framing Noise y Overrun FE NE ORE
+		 aore=ERRUART->Instance->SR;
+		 bore=ERRUART->Instance->DR;
+		 HAL_UART_DeInit(ERRUART);
+		 MX_USART1_UART_Init();
+		 HAL_UART_Receive_IT(ERRUART,(uint8_t *)UART_RX_byte,1);
+	}
+	if(ERRUART->Instance==USART2)
+	{
+		 volatile int aore=0;
+		 volatile int bore=0;
+		//Al leer los registros de esta forma SR y luego DR se resetean los errores de Framing Noise y Overrun FE NE ORE
+		 aore=ERRUART->Instance->SR;
+		 bore=ERRUART->Instance->DR;
+		 HAL_UART_DeInit(ERRUART);
+		 MX_USART2_UART_Init();
+		 HAL_UART_Receive_IT(ERRUART,(uint8_t *)UART2_RX_byte,1);
+	}
+	if(ERRUART->Instance==USART6)
+	{
+		 volatile int aore=0;
+		 volatile int bore=0;
+		//Al leer los registros de esta forma SR y luego DR se resetean los errores de Framing Noise y Overrun FE NE ORE
+		 aore=ERRUART->Instance->SR;
+		 bore=ERRUART->Instance->DR;
+		 HAL_UART_DeInit(ERRUART);
+		 MX_USART6_UART_Init();
+		 HAL_UART_Receive_IT(ERRUART,(uint8_t *)UART6_RX_byte,1);
+	}
+
+}
 
 int ITM0_Write( char *ptr, int len)
 {
