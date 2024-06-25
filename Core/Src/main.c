@@ -119,12 +119,12 @@ uint8_t EN_UART1_TMR=0,
 		 min_ticks=0;*/
 
 
-char	UART_RX_vect[1024],
+char	UART_RX_vect[4096],//UART_RX_vect[1024],
 		UART2_RX_vect[512],
-		UART6_RX_vect[512],
-		UART_RX_vect_hld[1024],
+		UART6_RX_vect[4096],//UART6_RX_vect[512],
+		UART_RX_vect_hld[4096],//UART_RX_vect_hld[1024],
 		UART2_RX_vect_hld[1024],
-		UART6_RX_vect_hld[1024],
+		UART6_RX_vect_hld[4096],//UART6_RX_vect_hld[1024],
 		CMP_VECT[]="\0",
 		UART_RX_byte[2],
 		UART2_RX_byte[2],
@@ -971,7 +971,8 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *INTSERIE)
 		 {
 			UART_RX_vect[UART_RX_pos]=UART_RX_byte[0];
 			UART_RX_pos++;
-			if(UART_RX_pos>=1022) UART_RX_pos=1022;
+			//if(UART_RX_pos>=1022) UART_RX_pos=1022;
+			if(UART_RX_pos>=4095) UART_RX_pos=4095;
 			HAL_TIM_OC_Start_IT(&htim2, TIM_CHANNEL_1);//HAL_TIM_Base_Start_IT(&htim7);	//Habilito el timer
 			TIM2->CNT=1;
 			EN_UART1_TMR=1;	//Habilito Timeout de software
@@ -993,7 +994,8 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *INTSERIE)
 		 {
 			UART6_RX_vect[UART6_RX_pos]=UART6_RX_byte[0];
 			UART6_RX_pos++;
-			if(UART6_RX_pos>=512) UART6_RX_pos=512;
+			//if(UART6_RX_pos>=512) UART6_RX_pos=512;
+			if(UART6_RX_pos>=4095) UART6_RX_pos=4095;
 			HAL_TIM_OC_Start_IT(&htim4, TIM_CHANNEL_1);//HAL_TIM_Base_Start_IT(&htim7);	//Habilito el timer
 			TIM4->CNT=1;
 			EN_UART6_TMR=1;	//Habilito Timeout de software
@@ -1011,8 +1013,10 @@ void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *TIMER)
 				 EN_UART1_TMR=0;
 				 UART_RX_items=UART_RX_pos;
 				 UART_RX_pos=0;
-				 UART_RX_vect[1022]='\0'; //Finalizo el vector a la fuerza ya que recibo hasta 124
+				 UART_RX_vect[4095]='\0';//UART_RX_vect[1022]='\0'; //Finalizo el vector a la fuerza ya que recibo hasta 124
 				 CopiaVector(UART_RX_vect_hld,UART_RX_vect,UART_RX_items,1,CMP_VECT);
+				 // Re-envío de info al ESP//
+				 HAL_UART_Transmit_IT(&huart6, UART_RX_vect_hld, UART_RX_items);
 				 HAL_UART_Receive_IT(&huart1,(uint8_t *)UART_RX_byte,1); //Habilito le recepcón de puerto serie al terminar
 				 if (wf._DBG_EN==1)
 				 {
@@ -1050,8 +1054,10 @@ void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *TIMER)
 				 EN_UART6_TMR=0;
 				 UART6_RX_items=UART6_RX_pos;
 				 UART6_RX_pos=0;
-				 UART6_RX_vect[512]='\0'; //Finalizo el vector a la fuerza ya que recibo hasta 124
+				 UART6_RX_vect[4095]='\0'; //UART6_RX_vect[512]='\0'; //Finalizo el vector a la fuerza ya que recibo hasta 124
 				 CopiaVector(UART6_RX_vect_hld,UART6_RX_vect,UART6_RX_items,1,CMP_VECT);
+				 // Re-envío de info al ESP//
+				 HAL_UART_Transmit_IT(&huart1, UART6_RX_vect_hld, UART6_RX_items);
 				 HAL_UART_Receive_IT(&huart6,(uint8_t *)UART6_RX_byte,1); //Habilito le recepcón de puerto serie al terminar
 				 if (wf._DBG_EN==1)
 				 {
