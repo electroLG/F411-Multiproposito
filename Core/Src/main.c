@@ -355,7 +355,7 @@ int main(void)
 	  if(FLAG_UART1==1)
 	  {
 		  ITM0_Write("\r\nRX UART1",strlen("\r\nRX UART1"));
-		  if(FT_String_ND(UART_RX_vect_hld,&UART_RX_items,"WIFI GOT IP",&dummy2,wf._uartRCVD_tok,wf._n_tok,&dummy,wf._id_conn,wf._overflowVector,FIND)==1)
+		  /*if(FT_String_ND(UART_RX_vect_hld,&UART_RX_items,"WIFI GOT IP",&dummy2,wf._uartRCVD_tok,wf._n_tok,&dummy,wf._id_conn,wf._overflowVector,FIND)==1)
 		  {
 			  HAL_UART_Transmit(&huart1,"AT+CIPSTA?\r\n", 12, 100);
 		  }
@@ -363,7 +363,7 @@ int main(void)
 		  if(FT_String_ND(UART_RX_vect_hld,&UART_RX_items,"+CIPSTA:",&dummy3,wf._uartRCVD_tok,wf._n_tok,&dummy,wf._id_conn,wf._overflowVector,FIND)==1)
 		  {
 			  HAL_UART_Transmit(&huart1,"AT+CIPSTART=\"TCP\",\"192.168.0.91\",8000\r\n", 39, 100);
-		  }
+		  }*/
 
 		  FLAG_UART1=0;
 	  }
