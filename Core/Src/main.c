@@ -76,15 +76,48 @@ int		mseg=0; //conteo de milisegundos
 
 char 	WIFI_NET[]="PLC_DEV",					//WIFI_NET[]="Fibertel WiFi967 2.4GHz",//WIFI_NET[]="PLC_DEV",//
 		WIFI_PASS[]="12345678",					//WIFI_PASS[]="0042880756",//WIFI_PASS[]="12345678",//
-		TCP_SERVER[]="192.168.0.91",			//TCP_SERVER[]="192.168.0.65",//TCP_SERVER[]="192.168.0.102",//TCP_SERVER[]="192.168.0.47",
-		TCP_PORT[]="8000",						//TCP_PORT[]="502",
+		WIFI__IP[]="192.168.0.100",
+		WIFI_MASK[]="255.255.255.0",
+
+		EP_SERVER[]="192.168.0.91",			//TCP_SERVER[]="192.168.0.65",//TCP_SERVER[]="192.168.0.102",//TCP_SERVER[]="192.168.0.47",
+		EP_PORT[]="8000",						//TCP_PORT[]="502",
+
 		TCP_SERVER_LOCAL[]="192.168.0.33",		//TCP_SERVER[]="192.168.0.47",
 		TCP_SERVER_LOCAL_GWY[]="192.168.0.99",	//TCP_SERVER[]="192.168.0.47",
 		TCP_SERVER_LOCAL_MSK[]="255.255.255.0",	//TCP_SERVER[]="192.168.0.47",
 		TCP_PORT_LOCAL[]="502",
 
+		ETHERNET_IP[]="192.168.0.34",
+		ETHERNET_TRGT_IP[]="192.168.0.1",
+		ETHERNET_MASK[]="255.255.255.0",
+		ETHERNET_PORT[]="502",
+
+		LORA_ADDR[]="3",
+		LORA_NET_ID[]="1",
+		LORA_NCPIN[]="1",
+		LORA_BAND[]="55",
+
+		MBUS_REG[]="1",
+		MBUS_ID[]="2",
+		MBUS_CODE[]="4",
+		MBUS_SRVR[]="1",
+
 		READ_FUNCTION_1[16],
 		READ_FUNCTION_2[16],
+		READ_FUNCTION_3[16],
+		READ_FUNCTION_4[16],
+		READ_FUNCTION_5[16],
+		READ_FUNCTION_6[16],
+		READ_FUNCTION_7[16],
+		READ_FUNCTION_8[16],
+		READ_FUNCTION_9[16],
+		READ_FUNCTION_10[16],
+		READ_FUNCTION_11[16],
+		READ_FUNCTION_12[16],
+		READ_FUNCTION_13[16],
+		READ_FUNCTION_14[16],
+		READ_FUNCTION_15[16],
+		READ_FUNCTION_16[16],
 
 		READ_HLF_FUNC_1[8],
 		READ_HLF_FUNC_2[8];
@@ -100,7 +133,9 @@ uint8_t EN_UART1_TMR=0,
 		EN_UART6_TMR=0,
 		FLAG_UART1=0,
 		FLAG_UART2=0,
-		FLAG_UART6=0;
+		FLAG_UART6=0,
+		SYS_WEB_SERVER=0,
+		SYS_DEBUG_EN=0;
 		/*decimal[17],
 		error=0,
 		ESP_REinit=0,			//Conteo de intentos de incializacion
@@ -128,11 +163,14 @@ char	UART_RX_vect[4096],//UART_RX_vect[1024],
 		CMP_VECT[]="\0",
 		UART_RX_byte[2],
 		UART2_RX_byte[2],
-		UART6_RX_byte[2];
-
+		UART6_RX_byte[2],
+    	WEB[]="<!DOCTYPE html><html><body><h2>SetUp RIoT device</h2><form action=\"/192.168.4.1:80\"><p>IP SRVR</p><input type=\"number\" id=\"A\" name=\"A\" min=\"1\" max=\"254\"><input type=\"number\" id=\"B\" name=\"B\" min=\"1\" max=\"254\"><input type=\"number\" id=\"C\" name=\"C\" min=\"1\" max=\"254\"><input type=\"number\" id=\"D\" name=\"D\" min=\"1\" max=\"254\"><p>EP KEY</p><input type=\"number\" id=\"E\" name=\"E\" min=\"1\" max=\"4095\"><p>ETH IP</p><input type=\"number\" id=\"F\" name=\"F\" min=\"1\" max=\"254\"><input type=\"number\" id=\"G\" name=\"G\" min=\"1\" max=\"254\"><input type=\"number\" id=\"H\" name=\"H\" min=\"1\" max=\"254\"><input type=\"number\" id=\"I\" name=\"I\" min=\"1\" max=\"254\"><p>ETH MSK</p><input type=\"number\" id=\"J\" name=\"J\" min=\"1\" max=\"254\"><input type=\"number\" id=\"K\" name=\"K\" min=\"1\" max=\"254\"><input type=\"number\" id=\"L\" name=\"L\" min=\"1\" max=\"254\"><input type=\"number\" id=\"M\" name=\"M\" min=\"1\" max=\"254\"><p>ETH PRT</p><input type=\"number\" id=\"N\" name=\"N\" min=\"1\" max=\"65535\"><input type=\"submit\" value=\"OK\"></form></body></html>\r\n",
+		WEB2[]="<!DOCTYPE html><html><body><h2>SetUp RIoT device</h2><form action=\"/192.168.0.14:80\"><p>IP SRVR</p><input type=\"number\" id=\"A\" name=\"A\" min=\"1\" max=\"254\"><input type=\"number\" id=\"B\" name=\"B\" min=\"1\" max=\"254\"><input type=\"number\" id=\"C\" name=\"C\" min=\"1\" max=\"254\"><input type=\"number\" id=\"D\" name=\"D\" min=\"1\" max=\"254\"><p>EP KEY</p><input type=\"number\" id=\"E\" name=\"E\" min=\"1\" max=\"4095\"><p>ETH IP</p><input type=\"number\" id=\"F\" name=\"F\" min=\"1\" max=\"254\"><input type=\"number\" id=\"G\" name=\"G\" min=\"1\" max=\"254\"><input type=\"number\" id=\"H\" name=\"H\" min=\"1\" max=\"254\"><input type=\"number\" id=\"I\" name=\"I\" min=\"1\" max=\"254\"><p>ETH MSK</p><input type=\"number\" id=\"J\" name=\"J\" min=\"1\" max=\"254\"><input type=\"number\" id=\"K\" name=\"K\" min=\"1\" max=\"254\"><input type=\"number\" id=\"L\" name=\"L\" min=\"1\" max=\"254\"><input type=\"number\" id=\"M\" name=\"M\" min=\"1\" max=\"254\"><p>ETH PRT</p><input type=\"number\" id=\"N\" name=\"N\" min=\"1\" max=\"65535\"><p>WF ID</p><input type=\"text\" id=\"O\" name=\"O\" maxlength=\"28\" size=\"28\"><p>WF PSS</p><input type=\"password\" id=\"P\" name=\"P\" maxlength=\"12\" size=\"12\"><p>WF IP</p><input type=\"number\" id=\"Q\" name=\"Q\" min=\"1\" max=\"254\"><input type=\"number\" id=\"R\" name=\"R\" min=\"1\" max=\"254\"><input type=\"number\" id=\"S\" name=\"S\" min=\"1\" max=\"254\"><input type=\"number\" id=\"T\" name=\"T\" min=\"1\" max=\"254\"><p>WF MSK</p><input type=\"number\" id=\"U\" name=\"U\" min=\"1\" max=\"254\"><input type=\"number\" id=\"V\" name=\"V\" min=\"1\" max=\"254\"><input type=\"number\" id=\"W\" name=\"W\" min=\"1\" max=\"254\"><input type=\"number\" id=\"X\" name=\"X\" min=\"1\" max=\"254\"><p>WF ORT</p><input type=\"number\" id=\"Y\" name=\"Y\" min=\"1\" max=\"65535\"><p>LoRa ADDR</p><input type=\"number\" id=\"Z\" name=\"Z\" min=\"1\" max=\"254\"><p>LoRa NID</p><input type=\"number\" id=\"0\" name=\"0\" min=\"0\" max=\"16\"><p>LoRa NCP</p><input type=\"number\" id=\"1\" name=\"1\" min=\"0\" max=\"16\"><p>LoRa BND</p><input type=\"number\" id=\"2\" name=\"2\" min=\"0\" max=\"16\"><input type=\"submit\" value=\"OK\"></form></body></html>\r\n",
+		WEB3[]="<!DOCTYPE html><html><body><h2>SetUp RIoT device</h2><form action=\"/192.168.4.1:80\"><p>IP SRVR</p><input type=\"number\" id=\"A\" name=\"A\" min=\"1\" max=\"254\"><input type=\"number\" id=\"B\" name=\"B\" min=\"1\" max=\"254\"><input type=\"number\" id=\"C\" name=\"C\" min=\"1\" max=\"254\"><input type=\"number\" id=\"D\" name=\"D\" min=\"1\" max=\"254\"><p>EP KEY</p><input type=\"number\" id=\"E\" name=\"E\" min=\"1\" max=\"4095\"><p>ETH IP</p><input type=\"number\" id=\"F\" name=\"F\" min=\"1\" max=\"254\"><input type=\"number\" id=\"G\" name=\"G\" min=\"1\" max=\"254\"><input type=\"number\" id=\"H\" name=\"H\" min=\"1\" max=\"254\"><input type=\"number\" id=\"I\" name=\"I\" min=\"1\" max=\"254\"><p>ETH MSK</p><input type=\"number\" id=\"J\" name=\"J\" min=\"1\" max=\"254\"><input type=\"number\" id=\"K\" name=\"K\" min=\"1\" max=\"254\"><input type=\"number\" id=\"L\" name=\"L\" min=\"1\" max=\"254\"><input type=\"number\" id=\"M\" name=\"M\" min=\"1\" max=\"254\"><p>ETH PRT</p><input type=\"number\" id=\"N\" name=\"N\" min=\"1\" max=\"65535\">\r\n",
+		WEB4[]="<p>WF ID</p><input type=\"text\" id=\"O\" name=\"O\" maxlength=\"28\" size=\"28\"><p>WF PSS</p><input type=\"password\" id=\"P\" name=\"P\" maxlength=\"12\" size=\"12\"><p>WF IP</p><input type=\"number\" id=\"Q\" name=\"Q\" min=\"1\" max=\"254\"><input type=\"number\" id=\"R\" name=\"R\" min=\"1\" max=\"254\"><input type=\"number\" id=\"S\" name=\"S\" min=\"1\" max=\"254\"><input type=\"number\" id=\"T\" name=\"T\" min=\"1\" max=\"254\"><p>WF MSK</p><input type=\"number\" id=\"U\" name=\"U\" min=\"1\" max=\"254\"><input type=\"number\" id=\"V\" name=\"V\" min=\"1\" max=\"254\"><input type=\"number\" id=\"W\" name=\"W\" min=\"1\" max=\"254\"><input type=\"number\" id=\"X\" name=\"X\" min=\"1\" max=\"254\"><p>WF ORT</p><input type=\"number\" id=\"Y\" name=\"Y\" min=\"1\" max=\"65535\"><p>LoRa ADDR</p><input type=\"number\" id=\"Z\" name=\"Z\" min=\"1\" max=\"254\"><p>LoRa NID</p><input type=\"number\" id=\"0\" name=\"0\" min=\"0\" max=\"16\"><p>LoRa NCP</p><input type=\"number\" id=\"1\" name=\"1\" min=\"0\" max=\"16\"><p>LoRa BND</p><input type=\"number\" id=\"2\" name=\"2\" min=\"0\" max=\"16\"><input type=\"submit\" value=\"OK\"></form></body></html>\r\n";
 int 	//wf_snd_flag_ticks=0,
 		dummy=0,
-		dummy2=11,
+		dummy2=3,
 		dummy3=27,
 		dummy4=5,
 		UART_RX_items=0,
@@ -190,8 +228,8 @@ int main(void)
 	  	wf.RESET_PIN=GPIO_PIN_8;
 		strcpy(wf._WF_Net, WIFI_NET);						//Nombre de la red WIFI  a conectar Fibertel WiFi967 2.4GHz
 		strcpy(wf._WF_Pass, WIFI_PASS);						//Password de la red WIFI
-		strcpy(wf._TCP_Remote_Server_IP, TCP_SERVER);		//char _TCP_Remote_Server_IP[16];		//IP del Servidor TCP
-		strcpy(wf._TCP_Remote_Server_Port, TCP_PORT);		//char _TCP_Remote_Server_Port[16];			//Puerto del Servidor TCP
+		strcpy(wf._TCP_Remote_Server_IP, EP_SERVER);		//char _TCP_Remote_Server_IP[16];		//IP del Servidor TCP
+		strcpy(wf._TCP_Remote_Server_Port, EP_PORT);		//char _TCP_Remote_Server_Port[16];			//Puerto del Servidor TCP
 		strcpy(wf._TCP_Local_Server_IP, TCP_SERVER_LOCAL);
 		strcpy(wf._TCP_Local_Server_GWY, TCP_SERVER_LOCAL_GWY);
 		strcpy(wf._TCP_Local_Server_MSK, TCP_SERVER_LOCAL_MSK);
@@ -301,25 +339,58 @@ int main(void)
   MX_TIM3_Init();
   MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
-  ITM0_Write("\r\n ARRANQUE",strlen("\r\n ARRANQUE"));
+  ITM0_Write("\r\n SYS-ARRANQUE",strlen("\r\n SYS-ARRANQUE"));
+  HAL_UART_Transmit(&huart6, "\r\n SYS-ARRANQUE", strlen("\r\n SYS-ARRANQUE"), 100);
 
-  dataRTC[3]=128;
-  BKP_REG_blk(&hrtc, WRITE , 20, dataRTC );
-  dataRTC[3]=0;
-  //BKP_REG_blk(&hrtc, READ , 20, dataRTC );
+ if(BKP_RG_BYTE(&hrtc,READ,LORA,BAND, READ_FUNCTION_8)==0)
+ {
+	  SYS_WEB_SERVER=1;	//Sin no hay datos habilito WebServer
 
-  BKP_REG_blk(&hrtc, READ , 20, dataRTC );
+	  BKP_RG_IP(&hrtc, 	 WRITE, WIFI_IP		, EP_SERVER);
+	  BKP_RG_IP(&hrtc,	 WRITE, WIFI_MSK	, WIFI_MASK);
+	  BKP_RG_2int(&hrtc, WRITE, PORT 		, EP_PORT ,EP_PORT);
+	  BKP_RG_IP(&hrtc, 	 WRITE, ETH_IP		, ETHERNET_IP);
+	  BKP_RG_IP(&hrtc, 	 WRITE, ETH_TRGT_IP	, ETHERNET_TRGT_IP);
+	  BKP_RG_IP(&hrtc, 	 WRITE, ETH_MSK		, ETHERNET_MASK);
+	  BKP_RG_IP(&hrtc, 	 WRITE, SERVER		, ETHERNET_PORT);
+	  BKP_RG_BYTE(&hrtc, WRITE, LORA 		, BAND 	, LORA_BAND);
+	  BKP_RG_BYTE(&hrtc, WRITE, LORA 		, NCPIN , LORA_NCPIN);
+	  BKP_RG_BYTE(&hrtc, WRITE, LORA 		, NET_ID, LORA_NET_ID);
+	  BKP_RG_BYTE(&hrtc, WRITE, LORA 		, ADDR 	, LORA_ADDR);
+	  BKP_RG_BYTE(&hrtc, WRITE, MODBUS 		, SRVR 	, MBUS_SRVR);
+	  BKP_RG_BYTE(&hrtc, WRITE, MODBUS 		, CODE 	, MBUS_CODE);
+	  BKP_RG_BYTE(&hrtc, WRITE, MODBUS 		, ID	, MBUS_ID);
+	  BKP_RG_BYTE(&hrtc, WRITE, MODBUS 		, REG 	, MBUS_REG);
 
-  BKP_RG_IP(&hrtc, WRITE, 0, TCP_SERVER);
-  BKP_RG_IP(&hrtc, WRITE, 1, TCP_SERVER_LOCAL);
-  BKP_RG_IP(&hrtc, WRITE, 3, TCP_SERVER_LOCAL_GWY);
-  BKP_RG_IP(&hrtc, WRITE, 4, TCP_SERVER_LOCAL_MSK);
+	  ITM0_Write("\r\n SYS-Escritura de valores en registros de back up",strlen("\r\n SYS-Escritura de valores en registros de back up"));
+	  if(SYS_DEBUG_EN==1) HAL_UART_Transmit(&huart6, "\r\n SYS-Escritura de valores en registros de back up", strlen("\r\n SYS-Escritura de valores en registros de back up"), 100);
+ }
 
-  BKP_RG_IP(&hrtc, READ, 0, READ_FUNCTION_1);
+  BKP_RG_IP(&hrtc, 	 READ, WIFI_IP		, READ_FUNCTION_1);
+  BKP_RG_IP(&hrtc,	 READ, WIFI_MSK		, READ_FUNCTION_2);
+  BKP_RG_2int(&hrtc, READ, PORT 		, READ_FUNCTION_16 ,READ_FUNCTION_3);
+  BKP_RG_IP(&hrtc, 	 READ, ETH_IP		, READ_FUNCTION_4);
+  BKP_RG_IP(&hrtc, 	 READ, ETH_TRGT_IP	, READ_FUNCTION_5);
+  BKP_RG_IP(&hrtc, 	 READ, ETH_MSK		, READ_FUNCTION_6);
+  BKP_RG_IP(&hrtc, 	 READ, SERVER		, READ_FUNCTION_7);
+  BKP_RG_BYTE(&hrtc, READ, LORA 		, BAND 	, READ_FUNCTION_8);
+  BKP_RG_BYTE(&hrtc, READ, LORA 		, NCPIN , READ_FUNCTION_9);
+  BKP_RG_BYTE(&hrtc, READ, LORA 		, NET_ID, READ_FUNCTION_10);
+  BKP_RG_BYTE(&hrtc, READ, LORA 		, ADDR 	, READ_FUNCTION_11);
+  BKP_RG_BYTE(&hrtc, READ, MODBUS 		, SRVR 	, READ_FUNCTION_12);
+  BKP_RG_BYTE(&hrtc, READ, MODBUS 		, CODE 	, READ_FUNCTION_13);
+  BKP_RG_BYTE(&hrtc, READ, MODBUS 		, ID	, READ_FUNCTION_14);
+  BKP_RG_BYTE(&hrtc, READ, MODBUS 		, REG 	, READ_FUNCTION_15);
+  ITM0_Write("\r\n Lectura de valores en registros de back up",strlen("\r\n Lectura de valores en registros de back up"));
+  if(SYS_DEBUG_EN==1) HAL_UART_Transmit(&huart6, "\r\n Lectura de valores en registros de back up", strlen("\r\n Lectura de valores en registros de back up"), 100);
+
+
+
+  /*BKP_RG_IP(&hrtc, READ, 0, READ_FUNCTION_1);
   BKP_RG_IP(&hrtc, READ, 1, READ_FUNCTION_2);
 
   BKP_RG_2int(&hrtc, WRITE , 2 , TCP_PORT ,TCP_PORT_LOCAL );
-  BKP_RG_2int(&hrtc, READ , 2 , READ_HLF_FUNC_1 ,READ_HLF_FUNC_2 );
+  BKP_RG_2int(&hrtc, READ , 2 , READ_HLF_FUNC_1 ,READ_HLF_FUNC_2 );*/
 
   if(dataRTC[3]==128)
   {
@@ -355,6 +426,23 @@ int main(void)
 	  if(FLAG_UART1==1)
 	  {
 		  ITM0_Write("\r\nRX UART1",strlen("\r\nRX UART1"));
+		  if(FT_String_ND(UART_RX_vect_hld,&UART_RX_items,"\r\n>",&dummy2,wf._uartRCVD_tok,wf._n_tok,&dummy,wf._id_conn,wf._overflowVector,FIND)==1)
+		  {
+			  /*HAL_UART_Transmit(&huart1, WEB, strlen(WEB), 100);
+			  HAL_Delay(600);
+			  HAL_UART_Transmit(&huart1, "AT+CIPCLOSE=0\r\n", strlen("AT+CIPCLOSE=0\r\n"), 100);
+			  HAL_Delay(10);*/
+			  //Esto arranca con un AT+CIPSEND=0,925 en el AT-Easy
+			  HAL_UART_Transmit(&huart1, WEB3, strlen(WEB3), 100);
+			  HAL_Delay(1000);
+			  HAL_UART_Transmit(&huart1, "AT+CIPSEND=0,1015\r\n", strlen("AT+CIPSEND=0,1015\r\n"), 100);
+			  HAL_Delay(1000);
+			  HAL_UART_Transmit(&huart1, WEB4, strlen(WEB4), 100);
+			  HAL_Delay(1000);
+			  HAL_UART_Transmit(&huart1, "AT+CIPCLOSE=0\r\n", strlen("AT+CIPCLOSE=0\r\n"), 100);
+			  HAL_Delay(10);
+
+		  }
 		  /*if(FT_String_ND(UART_RX_vect_hld,&UART_RX_items,"WIFI GOT IP",&dummy2,wf._uartRCVD_tok,wf._n_tok,&dummy,wf._id_conn,wf._overflowVector,FIND)==1)
 		  {
 			  HAL_UART_Transmit(&huart1,"AT+CIPSTA?\r\n", 12, 100);
