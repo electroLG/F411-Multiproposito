@@ -88,27 +88,27 @@ char 	WIFI_NET[]="Fibertel WiFi967 2.4GHz",					//WIFI_NET[]="Fibertel WiFi967 2
 		WIFI_MASK[]="255.255.255.0",
 
 		EP_SERVER[]="192.168.0.91",			//TCP_SERVER[]="192.168.0.65",//TCP_SERVER[]="192.168.0.102",//TCP_SERVER[]="192.168.0.47",
-		EP_PORT[]="8000",						//TCP_PORT[]="502",
+		EP_PORT[]="65535",						//TCP_PORT[]="502",
 
 		TCP_SERVER_LOCAL[]="192.168.0.33",		//TCP_SERVER[]="192.168.0.47",
 		TCP_SERVER_LOCAL_GWY[]="192.168.0.99",	//TCP_SERVER[]="192.168.0.47",
 		TCP_SERVER_LOCAL_MSK[]="255.255.255.0",	//TCP_SERVER[]="192.168.0.47",
-		TCP_PORT_LOCAL[]="502",
+		TCP_PORT_LOCAL[]="65534",
 
 		ETHERNET_IP[]="192.168.0.34",
 		ETHERNET_TRGT_IP[]="192.168.0.1",
 		ETHERNET_MASK[]="255.255.255.0",
-		ETHERNET_PORT[]="502",
+		ETHERNET_PORT[]="65532",
 
-		LORA_ADDR[]="3",
-		LORA_NET_ID[]="1",
-		LORA_NCPIN[]="1",
-		LORA_BAND[]="55",
+		LORA_ADDR[]="4",
+		LORA_NET_ID[]="5",
+		LORA_NCPIN[]="6",
+		LORA_BAND[]="77",
 
-		MBUS_REG[]="1",
-		MBUS_ID[]="2",
-		MBUS_CODE[]="4",
-		MBUS_SRVR[]="1",
+		MBUS_REG[]="123",
+		MBUS_ID[]="9",
+		MBUS_CODE[]="3",
+		MBUS_SRVR[]="210",
 
 
 		READ_FUNCTION_1[16],
@@ -388,54 +388,37 @@ int main(void)
   ITM0_Write("\r\n SYS-ARRANQUE",strlen("\r\n SYS-ARRANQUE"));
   HAL_UART_Transmit(&huart6, "\r\n SYS-ARRANQUE", strlen("\r\n SYS-ARRANQUE"), 100);
 
+
+
+  strcpy(NVS._WIFI_IP,WIFI__IP);
+  strcpy(NVS._WIFI_MASK,WIFI_MASK);
+  strcpy(NVS._WIFI_PORT,EP_PORT);
+  strcpy(NVS._ETH_PORT,ETHERNET_PORT);
+  strcpy(NVS._ETH_IP,ETHERNET_IP);
+  strcpy(NVS._ETH_TRGT_IP,ETHERNET_TRGT_IP);
+  strcpy(NVS._ETH_MASK,ETHERNET_MASK);
+  strcpy(NVS._SERVER,EP_SERVER);
+  strcpy(NVS._LORA_ADDR,LORA_ADDR);
+  strcpy(NVS._LORA_NET_ID,LORA_NET_ID);
+  strcpy(NVS._LORA_NCPIN,LORA_NCPIN);
+  strcpy(NVS._LORA_BAND,LORA_BAND);
+  strcpy(NVS._MBUS_REG,MBUS_REG);
+  strcpy(NVS._MBUS_ID,MBUS_ID);
+  strcpy(NVS._MBUS_CODE,MBUS_CODE);
+  strcpy(NVS._MBUS_SRVR,MBUS_SRVR);
   strcpy(NVS._WIFI_PASS,WIFI_PASS);
   strcpy(NVS._WIFI_SSID,WIFI_NET);
 
  if(BKP_RG_BYTE(&hrtc,READ,LORA,BAND, READ_FUNCTION_8)!=0)
  {
 	  SYS_WEB_SERVER=1;	//Sin no hay datos habilito WebServer
-
-	  BKP_RG_IP(&hrtc, 	 WRITE, WIFI_IP		, EP_SERVER);
-	  BKP_RG_IP(&hrtc,	 WRITE, WIFI_MSK	, WIFI_MASK);
-	  BKP_RG_2int(&hrtc, WRITE, PORT 		, EP_PORT ,EP_PORT);
-	  BKP_RG_IP(&hrtc, 	 WRITE, ETH_IP		, ETHERNET_IP);
-	  BKP_RG_IP(&hrtc, 	 WRITE, ETH_TRGT_IP	, ETHERNET_TRGT_IP);
-	  BKP_RG_IP(&hrtc, 	 WRITE, ETH_MSK		, ETHERNET_MASK);
-	  BKP_RG_IP(&hrtc, 	 WRITE, SERVER		, ETHERNET_PORT);
-	  BKP_RG_BYTE(&hrtc, WRITE, LORA 		, BAND 	, LORA_BAND);
-	  BKP_RG_BYTE(&hrtc, WRITE, LORA 		, NCPIN , LORA_NCPIN);
-	  BKP_RG_BYTE(&hrtc, WRITE, LORA 		, NET_ID, LORA_NET_ID);
-	  BKP_RG_BYTE(&hrtc, WRITE, LORA 		, ADDR 	, LORA_ADDR);
-	  BKP_RG_BYTE(&hrtc, WRITE, MODBUS 		, SRVR 	, MBUS_SRVR);
-	  BKP_RG_BYTE(&hrtc, WRITE, MODBUS 		, CODE 	, MBUS_CODE);
-	  BKP_RG_BYTE(&hrtc, WRITE, MODBUS 		, ID	, MBUS_ID);
-	  BKP_RG_BYTE(&hrtc, WRITE, MODBUS 		, REG 	, MBUS_REG);
-	  BKP_REG_WF_CONN(&hrtc,WRITE, PASS, &NVS);
-	  BKP_REG_WF_CONN(&hrtc,WRITE, SSID, &NVS);
-	  ITM0_Write("\r\n REG-Escritura de valores en registros de back up",strlen("\r\n SYS-Escritura de valores en registros de back up"));
+	  BKP_REG_RW(WRITE);
+	  ITM0_Write("\r\n REG-Escritura de valores en registros de back up",strlen("\r\n REG-Escritura de valores en registros de back up"));
 	  if(SYS_DEBUG_EN==1) HAL_UART_Transmit(&huart6, "\r\n SYS-Escritura de valores en registros de back up", strlen("\r\n SYS-Escritura de valores en registros de back up"), 100);
  }
 
-  BKP_RG_IP(&hrtc, 	 READ, WIFI_IP		, NVS._WIFI_IP);
-  BKP_RG_IP(&hrtc,	 READ, WIFI_MSK		, NVS._WIFI_MASK);
-  BKP_RG_2int(&hrtc, READ, PORT 		, NVS._WIFI_PORT ,NVS._ETH_PORT);
-  BKP_RG_IP(&hrtc, 	 READ, ETH_IP		, NVS._ETH_IP);
-  BKP_RG_IP(&hrtc, 	 READ, ETH_TRGT_IP	, NVS._ETH_TRGT_IP);
-  BKP_RG_IP(&hrtc, 	 READ, ETH_MSK		, NVS._ETH_MASK);
-  BKP_RG_IP(&hrtc, 	 READ, SERVER		, NVS._SERVER);
-  BKP_RG_BYTE(&hrtc, READ, LORA 		, BAND 	, NVS._LORA_BAND);
-  BKP_RG_BYTE(&hrtc, READ, LORA 		, NCPIN , NVS._LORA_NCPIN);
-  BKP_RG_BYTE(&hrtc, READ, LORA 		, NET_ID, NVS._LORA_NET_ID);
-  BKP_RG_BYTE(&hrtc, READ, LORA 		, ADDR 	, NVS._LORA_ADDR);
-  BKP_RG_BYTE(&hrtc, READ, MODBUS 		, SRVR 	, NVS._MBUS_SRVR);
-  BKP_RG_BYTE(&hrtc, READ, MODBUS 		, CODE 	, NVS._MBUS_CODE);
-  BKP_RG_BYTE(&hrtc, READ, MODBUS 		, ID	, NVS._MBUS_ID);
-  BKP_RG_BYTE(&hrtc, READ, MODBUS 		, REG 	, NVS._MBUS_REG);
-  strcpy(NVS._WIFI_PASS,"AAAAAAAAAAA");
-  strcpy(NVS._WIFI_SSID,"BBBBBBBBBBBBBBBBBBBBBBBBBB");
-  BKP_REG_WF_CONN(&hrtc,READ, PASS, &NVS);
-  BKP_REG_WF_CONN(&hrtc,READ, SSID, &NVS);
-  ITM0_Write("\r\n REG-Lectura de valores en registros de back up",strlen("\r\n Lectura de valores en registros de back up"));
+  BKP_REG_RW(READ);
+  ITM0_Write("\r\n REG-Lectura de valores en registros de back up",strlen("\r\n REG-Lectura de valores en registros de back up"));
   if(SYS_DEBUG_EN==1) HAL_UART_Transmit(&huart6, "\r\n Lectura de valores en registros de back up", strlen("\r\n Lectura de valores en registros de back up"), 100);
 
 
@@ -1555,8 +1538,53 @@ int ITM0_Write( char *ptr, int len)
   }
   return len;
 }
+//Generamos la lectura completa de los parametros de BackUp
+void BKP_REG_RW(uint8_t WR)
+{
+	if(WR==1)
+	{
+		  BKP_RG_IP(&hrtc, 	 WRITE, WIFI_IP		, NVS._WIFI_IP);
+		  BKP_RG_IP(&hrtc,	 WRITE, WIFI_MSK	, NVS._WIFI_MASK);
+		  BKP_RG_2int(&hrtc, WRITE, PORT 		, NVS._WIFI_PORT ,NVS._ETH_PORT);
+		  BKP_RG_IP(&hrtc, 	 WRITE, ETH_IP		, NVS._ETH_IP);
+		  BKP_RG_IP(&hrtc, 	 WRITE, ETH_TRGT_IP	, NVS._ETH_TRGT_IP);
+		  BKP_RG_IP(&hrtc, 	 WRITE, ETH_MSK		, NVS._ETH_MASK);
+		  BKP_RG_IP(&hrtc,   WRITE, SERVER		, NVS._SERVER);
+		  BKP_RG_BYTE(&hrtc, WRITE, LORA 		, BAND 	, NVS._LORA_BAND);
+		  BKP_RG_BYTE(&hrtc, WRITE, LORA 		, NCPIN , NVS._LORA_NCPIN);
+		  BKP_RG_BYTE(&hrtc, WRITE, LORA 		, NET_ID, NVS._LORA_NET_ID);
+		  BKP_RG_BYTE(&hrtc, WRITE, LORA 		, ADDR 	, NVS._LORA_ADDR);
+		  BKP_RG_BYTE(&hrtc, WRITE, MODBUS 		, SRVR 	, NVS._MBUS_SRVR);
+		  BKP_RG_BYTE(&hrtc, WRITE, MODBUS 		, CODE 	, NVS._MBUS_CODE);
+		  BKP_RG_BYTE(&hrtc, WRITE, MODBUS 		, ID	, NVS._MBUS_ID);
+		  BKP_RG_BYTE(&hrtc, WRITE, MODBUS 		, REG 	, NVS._MBUS_REG);
+		  BKP_REG_WF_CONN(&hrtc,WRITE, PASS, &NVS);
+		  BKP_REG_WF_CONN(&hrtc,WRITE, SSID, &NVS);
 
-
+	}
+	else if(WR==0)
+		{
+			  BKP_RG_IP(&hrtc, 	 READ, WIFI_IP		, NVS._WIFI_IP);
+			  BKP_RG_IP(&hrtc,	 READ, WIFI_MSK	  , NVS._WIFI_MASK);
+			  BKP_RG_2int(&hrtc, READ, PORT 		, NVS._WIFI_PORT ,NVS._ETH_PORT);
+			  BKP_RG_IP(&hrtc, 	 READ, ETH_IP		, NVS._ETH_IP);
+			  BKP_RG_IP(&hrtc, 	 READ, ETH_TRGT_IP	, NVS._ETH_TRGT_IP);
+			  BKP_RG_IP(&hrtc, 	 READ, ETH_MSK		, NVS._ETH_MASK);
+			  BKP_RG_IP(&hrtc, 	 READ, SERVER		, NVS._SERVER);
+			  BKP_RG_BYTE(&hrtc, READ, LORA 		, BAND 	, NVS._LORA_BAND);
+			  BKP_RG_BYTE(&hrtc, READ, LORA 		, NCPIN , NVS._LORA_NCPIN);
+			  BKP_RG_BYTE(&hrtc, READ, LORA 		, NET_ID, NVS._LORA_NET_ID);
+			  BKP_RG_BYTE(&hrtc, READ, LORA 		, ADDR 	, NVS._LORA_ADDR);
+			  BKP_RG_BYTE(&hrtc, READ, MODBUS 		, SRVR 	, NVS._MBUS_SRVR);
+			  BKP_RG_BYTE(&hrtc, READ, MODBUS 		, CODE 	, NVS._MBUS_CODE);
+			  BKP_RG_BYTE(&hrtc, READ, MODBUS 		, ID	, NVS._MBUS_ID);
+			  BKP_RG_BYTE(&hrtc, READ, MODBUS 		, REG 	, NVS._MBUS_REG);
+			  strcpy(NVS._WIFI_PASS,"AAAAAAAAAAA");
+			  strcpy(NVS._WIFI_SSID,"BBBBBBBBBBBBBBBBBBBBBBBBBB");
+			  BKP_REG_WF_CONN(&hrtc,READ, PASS, &NVS);
+			  BKP_REG_WF_CONN(&hrtc,READ, SSID, &NVS);
+		}
+}
 /* USER CODE END 4 */
 
 /**
