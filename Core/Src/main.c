@@ -46,6 +46,7 @@
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
 #define ITM_Port32(n)   (*((volatile unsigned long *)(0xE0000000+4*n)))
+#define UID_BASE_ADDRESS 0x1FFF7A10U
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -71,16 +72,18 @@ struct W5100_SPI ETH;
 struct MBUS mb_lr;
 struct MBUS mb_eth;			// Instancia MODBus Ethernet
 struct MBUS mb_wf;			// Instancia MODBus WiFi
+struct BKP_REG NVS;
 
-uint32_t dataRTC[20];
+uint32_t dataRTC[20],
+		 UID[3];
 
 int		mseg=0, //conteo de milisegundos
 	   	ms_ticks=0,
 	   	min_ticks=0,
 		MB_TOUT_ticks=0;
 
-char 	WIFI_NET[]="PLC_DEV",					//WIFI_NET[]="Fibertel WiFi967 2.4GHz",//WIFI_NET[]="PLC_DEV",//
-		WIFI_PASS[]="12345678",					//WIFI_PASS[]="0042880756",//WIFI_PASS[]="12345678",//
+char 	WIFI_NET[]="Fibertel WiFi967 2.4GHz",					//WIFI_NET[]="Fibertel WiFi967 2.4GHz",//WIFI_NET[]="PLC_DEV",//
+		WIFI_PASS[]="1234567890",					//WIFI_PASS[]="0042880756",//WIFI_PASS[]="12345678",//
 		WIFI__IP[]="192.168.0.100",
 		WIFI_MASK[]="255.255.255.0",
 
@@ -106,6 +109,7 @@ char 	WIFI_NET[]="PLC_DEV",					//WIFI_NET[]="Fibertel WiFi967 2.4GHz",//WIFI_NE
 		MBUS_ID[]="2",
 		MBUS_CODE[]="4",
 		MBUS_SRVR[]="1",
+
 
 		READ_FUNCTION_1[16],
 		READ_FUNCTION_2[16],
@@ -177,6 +181,8 @@ char	UART_RX_vect[4096],//UART_RX_vect[1024],
 		UART_RX_byte[2],
 		UART2_RX_byte[2],
 		UART6_RX_byte[2],
+		APWFUID[65],
+		dummyArray[20],
     	WEB[]="<!DOCTYPE html><html><body><h2>SetUp RIoT device</h2><form action=\"/192.168.4.1:80\"><p>IP SRVR</p><input type=\"number\" id=\"A\" name=\"A\" min=\"1\" max=\"254\"><input type=\"number\" id=\"B\" name=\"B\" min=\"1\" max=\"254\"><input type=\"number\" id=\"C\" name=\"C\" min=\"1\" max=\"254\"><input type=\"number\" id=\"D\" name=\"D\" min=\"1\" max=\"254\"><p>EP KEY</p><input type=\"number\" id=\"E\" name=\"E\" min=\"1\" max=\"4095\"><p>ETH IP</p><input type=\"number\" id=\"F\" name=\"F\" min=\"1\" max=\"254\"><input type=\"number\" id=\"G\" name=\"G\" min=\"1\" max=\"254\"><input type=\"number\" id=\"H\" name=\"H\" min=\"1\" max=\"254\"><input type=\"number\" id=\"I\" name=\"I\" min=\"1\" max=\"254\"><p>ETH MSK</p><input type=\"number\" id=\"J\" name=\"J\" min=\"1\" max=\"254\"><input type=\"number\" id=\"K\" name=\"K\" min=\"1\" max=\"254\"><input type=\"number\" id=\"L\" name=\"L\" min=\"1\" max=\"254\"><input type=\"number\" id=\"M\" name=\"M\" min=\"1\" max=\"254\"><p>ETH PRT</p><input type=\"number\" id=\"N\" name=\"N\" min=\"1\" max=\"65535\"><input type=\"submit\" value=\"OK\"></form></body></html>\r\n",
 		WEB2[]="<!DOCTYPE html><html><body><h2>SetUp RIoT device</h2><form action=\"/192.168.0.14:80\"><p>IP SRVR</p><input type=\"number\" id=\"A\" name=\"A\" min=\"1\" max=\"254\"><input type=\"number\" id=\"B\" name=\"B\" min=\"1\" max=\"254\"><input type=\"number\" id=\"C\" name=\"C\" min=\"1\" max=\"254\"><input type=\"number\" id=\"D\" name=\"D\" min=\"1\" max=\"254\"><p>EP KEY</p><input type=\"number\" id=\"E\" name=\"E\" min=\"1\" max=\"4095\"><p>ETH IP</p><input type=\"number\" id=\"F\" name=\"F\" min=\"1\" max=\"254\"><input type=\"number\" id=\"G\" name=\"G\" min=\"1\" max=\"254\"><input type=\"number\" id=\"H\" name=\"H\" min=\"1\" max=\"254\"><input type=\"number\" id=\"I\" name=\"I\" min=\"1\" max=\"254\"><p>ETH MSK</p><input type=\"number\" id=\"J\" name=\"J\" min=\"1\" max=\"254\"><input type=\"number\" id=\"K\" name=\"K\" min=\"1\" max=\"254\"><input type=\"number\" id=\"L\" name=\"L\" min=\"1\" max=\"254\"><input type=\"number\" id=\"M\" name=\"M\" min=\"1\" max=\"254\"><p>ETH PRT</p><input type=\"number\" id=\"N\" name=\"N\" min=\"1\" max=\"65535\"><p>WF ID</p><input type=\"text\" id=\"O\" name=\"O\" maxlength=\"28\" size=\"28\"><p>WF PSS</p><input type=\"password\" id=\"P\" name=\"P\" maxlength=\"12\" size=\"12\"><p>WF IP</p><input type=\"number\" id=\"Q\" name=\"Q\" min=\"1\" max=\"254\"><input type=\"number\" id=\"R\" name=\"R\" min=\"1\" max=\"254\"><input type=\"number\" id=\"S\" name=\"S\" min=\"1\" max=\"254\"><input type=\"number\" id=\"T\" name=\"T\" min=\"1\" max=\"254\"><p>WF MSK</p><input type=\"number\" id=\"U\" name=\"U\" min=\"1\" max=\"254\"><input type=\"number\" id=\"V\" name=\"V\" min=\"1\" max=\"254\"><input type=\"number\" id=\"W\" name=\"W\" min=\"1\" max=\"254\"><input type=\"number\" id=\"X\" name=\"X\" min=\"1\" max=\"254\"><p>WF ORT</p><input type=\"number\" id=\"Y\" name=\"Y\" min=\"1\" max=\"65535\"><p>LoRa ADDR</p><input type=\"number\" id=\"Z\" name=\"Z\" min=\"1\" max=\"254\"><p>LoRa NID</p><input type=\"number\" id=\"0\" name=\"0\" min=\"0\" max=\"16\"><p>LoRa NCP</p><input type=\"number\" id=\"1\" name=\"1\" min=\"0\" max=\"16\"><p>LoRa BND</p><input type=\"number\" id=\"2\" name=\"2\" min=\"0\" max=\"16\"><input type=\"submit\" value=\"OK\"></form></body></html>\r\n",
 		WEB3[]="<!DOCTYPE html><html><body><h2>SetUp RIoT device</h2><form action=\"/192.168.4.1:80\"><p>IP SRVR</p><input type=\"number\" id=\"A\" name=\"A\" min=\"1\" max=\"254\"><input type=\"number\" id=\"B\" name=\"B\" min=\"1\" max=\"254\"><input type=\"number\" id=\"C\" name=\"C\" min=\"1\" max=\"254\"><input type=\"number\" id=\"D\" name=\"D\" min=\"1\" max=\"254\"><p>EP KEY</p><input type=\"number\" id=\"E\" name=\"E\" min=\"1\" max=\"4095\"><p>ETH IP</p><input type=\"number\" id=\"F\" name=\"F\" min=\"1\" max=\"254\"><input type=\"number\" id=\"G\" name=\"G\" min=\"1\" max=\"254\"><input type=\"number\" id=\"H\" name=\"H\" min=\"1\" max=\"254\"><input type=\"number\" id=\"I\" name=\"I\" min=\"1\" max=\"254\"><p>ETH MSK</p><input type=\"number\" id=\"J\" name=\"J\" min=\"1\" max=\"254\"><input type=\"number\" id=\"K\" name=\"K\" min=\"1\" max=\"254\"><input type=\"number\" id=\"L\" name=\"L\" min=\"1\" max=\"254\"><input type=\"number\" id=\"M\" name=\"M\" min=\"1\" max=\"254\"><p>ETH PRT</p><input type=\"number\" id=\"N\" name=\"N\" min=\"1\" max=\"65535\">\r\n",
@@ -233,7 +239,23 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
+	//----------------------- Lectura de UID ------------------------//
+	/* El Nro de UID se compone de 96 bits
+	 * UID[0]=Coordenadas X e Y en el wafer
+	 * UID[1]=Lote parcial + Nro de wafer
+	 * UID[1]=Nro de Lote
+	 * Por probabilidad vamos a tomar como UID a visualizar como AP los primeros 32 bits
+	 */
+		UID[0] = *(__IO uint32_t *)(UID_BASE_ADDRESS);
+		UID[1] = *(__IO uint32_t *)(UID_BASE_ADDRESS + 4U);
+		UID[2] = *(__IO uint32_t *)(UID_BASE_ADDRESS + 8U);
+		INTOA(UID[0],dummyArray);
+		strcpy(APWFUID,dummyArray);
+		dummyArray[0]='\0';
+		INTOA(UID[1],dummyArray);
+		strncat(APWFUID,dummyArray,strlen(dummyArray));
 
+	//----------------------- Lectura de UID ------------------------//
 
 	  //----------------------- WIFI ------------------------//
 	  	Inicializar(&wf); 									//Borra todos los registros de la estructura
@@ -366,7 +388,10 @@ int main(void)
   ITM0_Write("\r\n SYS-ARRANQUE",strlen("\r\n SYS-ARRANQUE"));
   HAL_UART_Transmit(&huart6, "\r\n SYS-ARRANQUE", strlen("\r\n SYS-ARRANQUE"), 100);
 
- if(BKP_RG_BYTE(&hrtc,READ,LORA,BAND, READ_FUNCTION_8)==0)
+  strcpy(NVS._WIFI_PASS,WIFI_PASS);
+  strcpy(NVS._WIFI_SSID,WIFI_NET);
+
+ if(BKP_RG_BYTE(&hrtc,READ,LORA,BAND, READ_FUNCTION_8)!=0)
  {
 	  SYS_WEB_SERVER=1;	//Sin no hay datos habilito WebServer
 
@@ -385,27 +410,32 @@ int main(void)
 	  BKP_RG_BYTE(&hrtc, WRITE, MODBUS 		, CODE 	, MBUS_CODE);
 	  BKP_RG_BYTE(&hrtc, WRITE, MODBUS 		, ID	, MBUS_ID);
 	  BKP_RG_BYTE(&hrtc, WRITE, MODBUS 		, REG 	, MBUS_REG);
-
-	  ITM0_Write("\r\n SYS-Escritura de valores en registros de back up",strlen("\r\n SYS-Escritura de valores en registros de back up"));
+	  BKP_REG_WF_CONN(&hrtc,WRITE, PASS, &NVS);
+	  BKP_REG_WF_CONN(&hrtc,WRITE, SSID, &NVS);
+	  ITM0_Write("\r\n REG-Escritura de valores en registros de back up",strlen("\r\n SYS-Escritura de valores en registros de back up"));
 	  if(SYS_DEBUG_EN==1) HAL_UART_Transmit(&huart6, "\r\n SYS-Escritura de valores en registros de back up", strlen("\r\n SYS-Escritura de valores en registros de back up"), 100);
  }
 
-  BKP_RG_IP(&hrtc, 	 READ, WIFI_IP		, READ_FUNCTION_1);
-  BKP_RG_IP(&hrtc,	 READ, WIFI_MSK		, READ_FUNCTION_2);
-  BKP_RG_2int(&hrtc, READ, PORT 		, READ_FUNCTION_16 ,READ_FUNCTION_3);
-  BKP_RG_IP(&hrtc, 	 READ, ETH_IP		, READ_FUNCTION_4);
-  BKP_RG_IP(&hrtc, 	 READ, ETH_TRGT_IP	, READ_FUNCTION_5);
-  BKP_RG_IP(&hrtc, 	 READ, ETH_MSK		, READ_FUNCTION_6);
-  BKP_RG_IP(&hrtc, 	 READ, SERVER		, READ_FUNCTION_7);
-  BKP_RG_BYTE(&hrtc, READ, LORA 		, BAND 	, READ_FUNCTION_8);
-  BKP_RG_BYTE(&hrtc, READ, LORA 		, NCPIN , READ_FUNCTION_9);
-  BKP_RG_BYTE(&hrtc, READ, LORA 		, NET_ID, READ_FUNCTION_10);
-  BKP_RG_BYTE(&hrtc, READ, LORA 		, ADDR 	, READ_FUNCTION_11);
-  BKP_RG_BYTE(&hrtc, READ, MODBUS 		, SRVR 	, READ_FUNCTION_12);
-  BKP_RG_BYTE(&hrtc, READ, MODBUS 		, CODE 	, READ_FUNCTION_13);
-  BKP_RG_BYTE(&hrtc, READ, MODBUS 		, ID	, READ_FUNCTION_14);
-  BKP_RG_BYTE(&hrtc, READ, MODBUS 		, REG 	, READ_FUNCTION_15);
-  ITM0_Write("\r\n Lectura de valores en registros de back up",strlen("\r\n Lectura de valores en registros de back up"));
+  BKP_RG_IP(&hrtc, 	 READ, WIFI_IP		, NVS._WIFI_IP);
+  BKP_RG_IP(&hrtc,	 READ, WIFI_MSK		, NVS._WIFI_MASK);
+  BKP_RG_2int(&hrtc, READ, PORT 		, NVS._WIFI_PORT ,NVS._ETH_PORT);
+  BKP_RG_IP(&hrtc, 	 READ, ETH_IP		, NVS._ETH_IP);
+  BKP_RG_IP(&hrtc, 	 READ, ETH_TRGT_IP	, NVS._ETH_TRGT_IP);
+  BKP_RG_IP(&hrtc, 	 READ, ETH_MSK		, NVS._ETH_MASK);
+  BKP_RG_IP(&hrtc, 	 READ, SERVER		, NVS._SERVER);
+  BKP_RG_BYTE(&hrtc, READ, LORA 		, BAND 	, NVS._LORA_BAND);
+  BKP_RG_BYTE(&hrtc, READ, LORA 		, NCPIN , NVS._LORA_NCPIN);
+  BKP_RG_BYTE(&hrtc, READ, LORA 		, NET_ID, NVS._LORA_NET_ID);
+  BKP_RG_BYTE(&hrtc, READ, LORA 		, ADDR 	, NVS._LORA_ADDR);
+  BKP_RG_BYTE(&hrtc, READ, MODBUS 		, SRVR 	, NVS._MBUS_SRVR);
+  BKP_RG_BYTE(&hrtc, READ, MODBUS 		, CODE 	, NVS._MBUS_CODE);
+  BKP_RG_BYTE(&hrtc, READ, MODBUS 		, ID	, NVS._MBUS_ID);
+  BKP_RG_BYTE(&hrtc, READ, MODBUS 		, REG 	, NVS._MBUS_REG);
+  strcpy(NVS._WIFI_PASS,"AAAAAAAAAAA");
+  strcpy(NVS._WIFI_SSID,"BBBBBBBBBBBBBBBBBBBBBBBBBB");
+  BKP_REG_WF_CONN(&hrtc,READ, PASS, &NVS);
+  BKP_REG_WF_CONN(&hrtc,READ, SSID, &NVS);
+  ITM0_Write("\r\n REG-Lectura de valores en registros de back up",strlen("\r\n Lectura de valores en registros de back up"));
   if(SYS_DEBUG_EN==1) HAL_UART_Transmit(&huart6, "\r\n Lectura de valores en registros de back up", strlen("\r\n Lectura de valores en registros de back up"), 100);
 
 
@@ -433,7 +463,6 @@ int main(void)
   HAL_GPIO_WritePin(GPIOA, MBUS_CTRL_Pin, GPIO_PIN_RESET);	//Habilito 485 para RX
   HAL_GPIO_WritePin(GPIOA, WF_EN_RST_Pin, GPIO_PIN_SET);	//Habilito WiFi
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_7, SET);				//Habilito ETHERNET
-
 
 //------------------ Habilitacion de dispositivos ---------------//
 
