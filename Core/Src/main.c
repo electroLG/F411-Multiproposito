@@ -82,33 +82,33 @@ int		mseg=0, //conteo de milisegundos
 	   	min_ticks=0,
 		MB_TOUT_ticks=0;
 
-char 	WIFI_NET[]="Fibertel WiFi967 2.4GHz",					//WIFI_NET[]="Fibertel WiFi967 2.4GHz",//WIFI_NET[]="PLC_DEV",//
-		WIFI_PASS[]="1234567890",					//WIFI_PASS[]="0042880756",//WIFI_PASS[]="12345678",//
-		WIFI__IP[]="192.168.0.100",
+char 	WIFI_NET[]="PLC_DEV_CON_TI",					//WIFI_NET[]="Fibertel WiFi967 2.4GHz",//WIFI_NET[]="PLC_DEV",//
+		WIFI_PASS[]="123456789",					//WIFI_PASS[]="0042880756",//WIFI_PASS[]="12345678",//
+		WIFI__IP[]="192.168.0.33",
 		WIFI_MASK[]="255.255.255.0",
 
 		EP_SERVER[]="192.168.0.91",			//TCP_SERVER[]="192.168.0.65",//TCP_SERVER[]="192.168.0.102",//TCP_SERVER[]="192.168.0.47",
-		EP_PORT[]="65535",						//TCP_PORT[]="502",
+		EP_PORT[]="8000",						//TCP_PORT[]="502",
 
-		TCP_SERVER_LOCAL[]="192.168.0.33",		//TCP_SERVER[]="192.168.0.47",
-		TCP_SERVER_LOCAL_GWY[]="192.168.0.99",	//TCP_SERVER[]="192.168.0.47",
+		TCP_SERVER_LOCAL[]="192.168.5.2",		//TCP_SERVER[]="192.168.0.47",
+		TCP_SERVER_LOCAL_GWY[]="192.168.5.1",	//TCP_SERVER[]="192.168.0.47",
 		TCP_SERVER_LOCAL_MSK[]="255.255.255.0",	//TCP_SERVER[]="192.168.0.47",
-		TCP_PORT_LOCAL[]="65534",
+		TCP_PORT_LOCAL[]="8000",
 
-		ETHERNET_IP[]="192.168.0.34",
-		ETHERNET_TRGT_IP[]="192.168.0.1",
+		ETHERNET_IP[]="192.168.0.44",
+		ETHERNET_TRGT_IP[]="192.168.0.3",
 		ETHERNET_MASK[]="255.255.255.0",
-		ETHERNET_PORT[]="65532",
+		ETHERNET_PORT[]="502",
 
-		LORA_ADDR[]="4",
-		LORA_NET_ID[]="5",
-		LORA_NCPIN[]="6",
-		LORA_BAND[]="77",
+		LORA_ADDR[]="3",
+		LORA_NET_ID[]="1",
+		LORA_NCPIN[]="3",
+		LORA_BAND[]="55",
 
-		MBUS_REG[]="123",
-		MBUS_ID[]="9",
-		MBUS_CODE[]="3",
-		MBUS_SRVR[]="210",
+		MBUS_REG[]="16",
+		MBUS_ID[]="1",
+		MBUS_CODE[]="4",
+		MBUS_SRVR[]="2",
 
 
 		READ_FUNCTION_1[16],
@@ -409,25 +409,19 @@ int main(void)
   strcpy(NVS._WIFI_PASS,WIFI_PASS);
   strcpy(NVS._WIFI_SSID,WIFI_NET);
 
- if(BKP_RG_BYTE(&hrtc,READ,LORA,BAND, READ_FUNCTION_8)!=0)
- {
-	  SYS_WEB_SERVER=1;	//Sin no hay datos habilito WebServer
-	  BKP_REG_RW(WRITE);
-	  ITM0_Write("\r\n REG-Escritura de valores en registros de back up",strlen("\r\n REG-Escritura de valores en registros de back up"));
+  if(BKP_RG_BYTE(&hrtc,READ,LORA,BAND, READ_FUNCTION_8)==0)
+  {
+	  ITM0_Write("\r\n SYS-Escritura de valores en registros de back up",strlen("\r\n SYS-Escritura de valores en registros de back up"));
 	  if(SYS_DEBUG_EN==1) HAL_UART_Transmit(&huart6, "\r\n SYS-Escritura de valores en registros de back up", strlen("\r\n SYS-Escritura de valores en registros de back up"), 100);
- }
+	  BKP_REG_RW(&hrtc, WRITE, &NVS);
+	  BKP_REG_SHW(&NVS,&huart6,SYS_DEBUG_EN);
+  }
 
-  BKP_REG_RW(READ);
   ITM0_Write("\r\n REG-Lectura de valores en registros de back up",strlen("\r\n REG-Lectura de valores en registros de back up"));
-  if(SYS_DEBUG_EN==1) HAL_UART_Transmit(&huart6, "\r\n Lectura de valores en registros de back up", strlen("\r\n Lectura de valores en registros de back up"), 100);
+  if(SYS_DEBUG_EN==1) HAL_UART_Transmit(&huart6, "\r\n SYS-Lectura de valores en registros de back up", strlen("\r\n SYS-Lectura de valores en registros de back up"), 100);
+  BKP_REG_RW(&hrtc, READ, &NVS);
+  BKP_REG_SHW(&NVS,&huart6,SYS_DEBUG_EN);
 
-
-
-  /*BKP_RG_IP(&hrtc, READ, 0, READ_FUNCTION_1);
-  BKP_RG_IP(&hrtc, READ, 1, READ_FUNCTION_2);
-
-  BKP_RG_2int(&hrtc, WRITE , 2 , TCP_PORT ,TCP_PORT_LOCAL );
-  BKP_RG_2int(&hrtc, READ , 2 , READ_HLF_FUNC_1 ,READ_HLF_FUNC_2 );*/
 
   if(dataRTC[3]==128)
   {
@@ -1112,13 +1106,6 @@ void SysTick_Handler(void)
    	ms_ticks=0;
    	min_ticks++;
 
-     	//if(MBUS_ticks==360) MBUS_ticks=0;
-
-     /*	if (asc==0)  MBUS_ticks++;
-     	if (MBUS_ticks==100) asc=1;
-     	if (asc==1) MBUS_ticks--;
-     	if (MBUS_ticks==0) asc=0;*/
-
    	HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
 
    	if(spi_no_debug)
@@ -1538,53 +1525,7 @@ int ITM0_Write( char *ptr, int len)
   }
   return len;
 }
-//Generamos la lectura completa de los parametros de BackUp
-void BKP_REG_RW(uint8_t WR)
-{
-	if(WR==1)
-	{
-		  BKP_RG_IP(&hrtc, 	 WRITE, WIFI_IP		, NVS._WIFI_IP);
-		  BKP_RG_IP(&hrtc,	 WRITE, WIFI_MSK	, NVS._WIFI_MASK);
-		  BKP_RG_2int(&hrtc, WRITE, PORT 		, NVS._WIFI_PORT ,NVS._ETH_PORT);
-		  BKP_RG_IP(&hrtc, 	 WRITE, ETH_IP		, NVS._ETH_IP);
-		  BKP_RG_IP(&hrtc, 	 WRITE, ETH_TRGT_IP	, NVS._ETH_TRGT_IP);
-		  BKP_RG_IP(&hrtc, 	 WRITE, ETH_MSK		, NVS._ETH_MASK);
-		  BKP_RG_IP(&hrtc,   WRITE, SERVER		, NVS._SERVER);
-		  BKP_RG_BYTE(&hrtc, WRITE, LORA 		, BAND 	, NVS._LORA_BAND);
-		  BKP_RG_BYTE(&hrtc, WRITE, LORA 		, NCPIN , NVS._LORA_NCPIN);
-		  BKP_RG_BYTE(&hrtc, WRITE, LORA 		, NET_ID, NVS._LORA_NET_ID);
-		  BKP_RG_BYTE(&hrtc, WRITE, LORA 		, ADDR 	, NVS._LORA_ADDR);
-		  BKP_RG_BYTE(&hrtc, WRITE, MODBUS 		, SRVR 	, NVS._MBUS_SRVR);
-		  BKP_RG_BYTE(&hrtc, WRITE, MODBUS 		, CODE 	, NVS._MBUS_CODE);
-		  BKP_RG_BYTE(&hrtc, WRITE, MODBUS 		, ID	, NVS._MBUS_ID);
-		  BKP_RG_BYTE(&hrtc, WRITE, MODBUS 		, REG 	, NVS._MBUS_REG);
-		  BKP_REG_WF_CONN(&hrtc,WRITE, PASS, &NVS);
-		  BKP_REG_WF_CONN(&hrtc,WRITE, SSID, &NVS);
 
-	}
-	else if(WR==0)
-		{
-			  BKP_RG_IP(&hrtc, 	 READ, WIFI_IP		, NVS._WIFI_IP);
-			  BKP_RG_IP(&hrtc,	 READ, WIFI_MSK	  , NVS._WIFI_MASK);
-			  BKP_RG_2int(&hrtc, READ, PORT 		, NVS._WIFI_PORT ,NVS._ETH_PORT);
-			  BKP_RG_IP(&hrtc, 	 READ, ETH_IP		, NVS._ETH_IP);
-			  BKP_RG_IP(&hrtc, 	 READ, ETH_TRGT_IP	, NVS._ETH_TRGT_IP);
-			  BKP_RG_IP(&hrtc, 	 READ, ETH_MSK		, NVS._ETH_MASK);
-			  BKP_RG_IP(&hrtc, 	 READ, SERVER		, NVS._SERVER);
-			  BKP_RG_BYTE(&hrtc, READ, LORA 		, BAND 	, NVS._LORA_BAND);
-			  BKP_RG_BYTE(&hrtc, READ, LORA 		, NCPIN , NVS._LORA_NCPIN);
-			  BKP_RG_BYTE(&hrtc, READ, LORA 		, NET_ID, NVS._LORA_NET_ID);
-			  BKP_RG_BYTE(&hrtc, READ, LORA 		, ADDR 	, NVS._LORA_ADDR);
-			  BKP_RG_BYTE(&hrtc, READ, MODBUS 		, SRVR 	, NVS._MBUS_SRVR);
-			  BKP_RG_BYTE(&hrtc, READ, MODBUS 		, CODE 	, NVS._MBUS_CODE);
-			  BKP_RG_BYTE(&hrtc, READ, MODBUS 		, ID	, NVS._MBUS_ID);
-			  BKP_RG_BYTE(&hrtc, READ, MODBUS 		, REG 	, NVS._MBUS_REG);
-			  strcpy(NVS._WIFI_PASS,"AAAAAAAAAAA");
-			  strcpy(NVS._WIFI_SSID,"BBBBBBBBBBBBBBBBBBBBBBBBBB");
-			  BKP_REG_WF_CONN(&hrtc,READ, PASS, &NVS);
-			  BKP_REG_WF_CONN(&hrtc,READ, SSID, &NVS);
-		}
-}
 /* USER CODE END 4 */
 
 /**
