@@ -80,7 +80,13 @@ uint32_t dataRTC[20],
 int		mseg=0, //conteo de milisegundos
 	   	ms_ticks=0,
 	   	min_ticks=0,
-		MB_TOUT_ticks=0;
+		MB_TOUT_ticks=0,
+		ESP_ticks=0;
+
+char EP_DATA[]="/logdata",//ENDPOINT[]="/tepelco",
+	 EP_ERROR[]="/logerror",
+	 EP_APROV[]="/arovisionamiento",
+	 EP_[]="/logdata";
 /*
 char 	WIFI_NET[]="PLC_DEV_CON_TI",					//WIFI_NET[]="Fibertel WiFi967 2.4GHz",//WIFI_NET[]="PLC_DEV",//
 		WIFI_PASS[]="123456789",					//WIFI_PASS[]="0042880756",//WIFI_PASS[]="12345678",//
@@ -144,13 +150,20 @@ uint16_t 	S0_get_size = 0,
 uint8_t EN_UART1_TMR=0,
 		EN_UART2_TMR=0,
 		EN_UART6_TMR=0,
+		ESP_conn=0,
+		ESP_timeout=0,
+		ESP_restart=0,
+		ESP_HW_Init=0,
+		ESP_REinit=0,			//Conteo de intentos de incializacion
+		ESP_InitF=0,			//Flag de error por no encontrar la sentencia
 		FLAG_UART1_WF=0,
 		FLAG_UART2_485=0,
 		FLAG_UART6=0,
 		SYS_WEB_SERVER=0,
+		SYS_WF_DEBUG_EN=1,
 		SYS_DEBUG_EN=1,					//Muestra eventos de sistema  por ITM
 		SYS_SPI_ETH_READ_EN=0,
-		SYS_ETH_DBG_EN=1,
+		SYS_ETH_DBG_EN=0,
 		SYS_saveConfigData=0,
 		SYS_WIFI_UART_PASSTHROUGH=0,	//Vinvula el seria directo con el ESP8266, generando un puerto transparente
 		spi_no_debug=0,
@@ -198,8 +211,7 @@ char	UART_RX_vect[4096],//UART_RX_vect[1024],
 
 		// 854 + 933 + 859
 
-int 	//wf_snd_flag_ticks=0,
-		dummy=0,
+int 	dummy=0,
 		dummy2=3,
 		dummy3=27,
 		dummy4=5,
@@ -242,17 +254,6 @@ int main(void)
 
   /* USER CODE BEGIN 1 */
 
-
-	  //-----------------------1 WIFI ------------------------//
-	  	Inicializar(&wf); 									//Borra todos los registros de la estructura
-	  	wf.RESET_PORT=GPIOA;
-	  	wf.RESET_PIN=GPIO_PIN_8;
-		wf._TCP_Local_Server_EN=0;							//Habilito el Servidor Local
-		wf._estado_conexion=100;//Si no se define no arranca	//wf._estado_conexion=1;					//Arranco en WiFi Desconectado
-		wf._automatizacion=WF_CONNECT_TCP;//wf._automatizacion=WF_SEND;
-		wf._NO_IP=1;
-		wf._DBG_EN=1;
-	  //-----------------------1 WIFI ------------------------//
 		//-----------------------1 Lectura de UID ------------------------//
 		/* El Nro de UID se compone de 96 bits
 		 * UID[0]=Coordenadas X e Y en el wafer
@@ -414,14 +415,12 @@ int main(void)
   HAL_UART_Receive_IT(&huart1,(uint8_t *)UART_RX_byte,1);
   if(BKP_RG_BYTE(&hrtc,READ,LORA,BAND,NVS._LORA_BAND)==0)
   {
-
 	  createAccessPoint(&wf,&huart1);
 	  SYS_saveConfigData=1;
 	  while(SYS_saveConfigData==1)
 	  {
 		  if(FLAG_UART1_WF==1)
 		  {
-
 			dummy2=strlen(":GET /192.168.4.1:80?A=");
 			if(FT_String_ND(UART_RX_vect_hld,&UART_RX_items,":GET /192.168.4.1:80?A=",&dummy2,wf._uartRCVD_tok,wf._n_tok,&dummy,wf._id_conn,wf._overflowVector,FIND)==1)
 				{
@@ -493,7 +492,53 @@ int main(void)
   eth_init(&ETH);
   eth_socket_init(&ETH,0);
   SYS_SPI_ETH_READ_EN=1;
-  //------------------1 Inicializacion ETHERNET ---------------//
+  //------------------0 Inicializacion ETHERNET ---------------//
+  //------------------1 Inicializacion WIFI ---------------//
+
+  	Inicializar(&wf); 									//Borra todos los registros de la estructura
+  	wf.RESET_PORT=GPIOA;
+  	wf.RESET_PIN=WF_EN_RST_Pin;
+	strcpy(wf._WF_Net, NVS._WIFI_SSID);						//Nombre de la red WIFI  a conectar Fibertel WiFi967 2.4GHz
+	strcpy(wf._WF_Pass, NVS._WIFI_PASS);						//Password de la red WIFI
+	strcpy(wf._TCP_Remote_Server_IP, NVS._SERVER);		//char _TCP_Remote_Server_IP[16];		//IP del Servidor TCP
+	strcpy(wf._TCP_Remote_Server_Port, NVS._WIFI_PORT);		//char _TCP_Remote_Server_Port[16];			//Puerto del Servidor TCP
+	/*strcpy(wf._TCP_Local_Server_IP, TCP_SERVER_LOCAL);
+	strcpy(wf._TCP_Local_Server_GWY, TCP_SERVER_LOCAL_GWY);
+	strcpy(wf._TCP_Local_Server_MSK, TCP_SERVER_LOCAL_MSK);
+	strcpy(wf._TCP_Local_Server_Port, TCP_PORT_LOCAL);*/
+	wf._TCP_Local_Server_EN=0;							//Habilito el Servidor Local
+	wf._estado_conexion=100;//Si no se define no arranca	//wf._estado_conexion=1;					//Arranco en WiFi Desconectado
+	wf._automatizacion=WF_CONNECT_TCP;//wf._automatizacion=WF_SEND;
+	wf._NO_IP=1;
+	wf._DBG_EN=1;
+
+
+  if(ESP8266_HW_Init(&huart1)==1)
+  {
+	  ESP_HW_Init=1;
+	  if (wf._DBG_EN==1) ITM0_Write("\r\n ESP HW Init OK\r\n",19);
+	  if (SYS_WF_DEBUG_EN==1) HAL_UART_Transmit_IT(&huart6,"\r\n ESP HW Init OK\r\n",strlen("\r\n ESP HW Init OK\r\n"));
+  }
+  else
+  {
+	  ESP_REinit=0;
+	  ESP8266_HW_Reset(&wf); 				//Si no logra resetear con el comando de AT+RESTORE, pruebo el resete desde hardware
+	  if(ESP8266_HW_Init(&huart1)==1)
+	  {
+		  ESP_HW_Init=1;
+		  if (wf._DBG_EN==1) ITM0_Write("\r\n ESP HW Init OK\r\n",19);
+		  if (SYS_WF_DEBUG_EN==1) HAL_UART_Transmit_IT(&huart2,"\r\n ESP HW Init OK\r\n",strlen("\r\n ESP HW Init OK\r\n"));
+	  }
+	  else
+	  {
+		  ESP_HW_Init=0;
+		  if (wf._DBG_EN==1)  ITM0_Write("\r\n ESP HW Init Fail\r\n",24);
+		  if (SYS_WF_DEBUG_EN==1) HAL_UART_Transmit_IT(&huart2,"\r\n ESP HW Init Fail\r\n",strlen("\r\n ESP HW Init Fail\r\n"));
+	  }
+  }
+
+  HAL_Delay(1000);
+  //------------------0 Inicializacion WIFI ---------------//
 
 
   /* USER CODE END 2 */
@@ -506,16 +551,38 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
-	  if(FLAG_UART1_WF==1)
-	  {
-		  ITM0_Write("\r\nRX UART1",strlen("\r\nRX UART1"));
 
-		  FLAG_UART1_WF=0;
-	  }
+	 if (ESP_restart==1) //WRNNG Hardcoded RESET WIFI
+		{
+			ESP8266_HW_Reset(&wf);
+			ITM0_Write("\r\nESP8266 Restart",strlen("\r\nESP8266 Restart"));
+		}
+
+	  if((FLAG_UART1_WF==1)||(ESP_timeout==1))
+		  {
+		  	  if(ESP_timeout==1)
+		  	  {
+		  		ESP_timeout=0;
+		  	  }
+			  ITM0_Write("\r\nRX UART1",strlen("\r\nRX UART1"));
+			  wf._n_orig=UART_RX_items;
+			  CopiaVector(wf._uartRCVD,UART_RX_vect_hld,UART_RX_items,1,CMP_VECT);
+			  if (ESP_HW_Init==1) //Si el módulo se inició correctamente
+				{
+				  ESP_conn=AT_ESP8266_ND(&wf);
+				}
+			  FLAG_UART1_WF=0;
+		  }
+	  if (ESP_HW_Init==1) //Si el módulo se inició correctamente
+		{
+			ESP_conn=WiFi_Conn_ND(&wf,&huart1,1);	//Tiene que ir en el main el chequeo es constante
+		}
+
 
 	  if(FLAG_UART2_485==1)
 	  {
 		  ITM0_Write("\r\nRX UART2",strlen("\r\nRX UART2"));
+		  dummy3=strlen("PRUEBA DE RECEPCION VIA 485");
 		  if(FT_String_ND(UART2_RX_vect_hld,&UART2_RX_items,"PRUEBA DE RECEPCION VIA 485",&dummy3,wf._uartRCVD_tok,wf._n_tok,&dummy,wf._id_conn,wf._overflowVector,FIND)==1)
 		  {
 			  HAL_GPIO_WritePin(GPIOA, MBUS_CTRL_Pin, GPIO_PIN_SET);	//Habilito 485 para TX
@@ -528,6 +595,7 @@ int main(void)
 	  if(FLAG_UART6==1)
 	  {
 		  ITM0_Write("\r\nRX UART6",strlen("\r\nRX UART6"));
+		  dummy4=strlen("+RCV");
 		  if(FT_String_ND(UART6_RX_vect_hld,&UART6_RX_items,"+RCV",&dummy4,wf._uartRCVD_tok,wf._n_tok,&dummy,wf._id_conn,wf._overflowVector,FIND)==1)
 		  {
 			  HAL_UART_Transmit(&huart6,"AT\r\n", 4, 100);
@@ -1094,6 +1162,7 @@ void SysTick_Handler(void)
   /* USER CODE BEGIN SysTick_IRQn 0 */
    mseg++;
    ms_ticks++;
+   ESP_ticks++;
 
 	if (mseg==500)
 		{
@@ -1121,6 +1190,7 @@ void SysTick_Handler(void)
    	  {
    	  if(SYS_SPI_ETH_READ_EN==1)
    	  {
+   		 HAL_GPIO_TogglePin(GPIOA, DBG_PIN_Pin);
    	     ETH.S0_status=eth_rd_SOCKET_STAT(&ETH,0);
 
    		  switch(ETH.S0_status)	//Check Socket status
@@ -1375,7 +1445,48 @@ void SysTick_Handler(void)
   /* USER CODE END SysTick_IRQn 0 */
   HAL_IncTick();
   /* USER CODE BEGIN SysTick_IRQn 1 */
+	if(wf._estado_conexion==4)//Solo cuento cuando no estahaciendo otra cosa
+	{
+		//ticks++;
+	}
+	else
+	{
+		//ticks=0;
+	}
 
+if(wf._ejecucion==1)
+	{
+		if (ESP_timeout!=1)
+		{
+			if(wf._instruccion!=2) wf._ticks++;//-----------------------Solo cuento una vez reconcido el timeout, cuando entro al timeout no cuento
+			if(wf._instruccion==2) wf._ticks2++;
+		}
+
+
+		if ((wf._instruccion!=2)&&(wf._ticks > 5500)) //if (wf._ticks > 5000)
+		{
+			ESP_timeout=1;
+			if(huart1.Instance->CR1 == 0x200C)  //--------------------Evito error UART colgado
+			{
+				HAL_UART_Receive_IT(&huart1,(uint8_t *)UART_RX_byte,1);
+				FLAG_UART1_WF=0; //OBS-VER Para que me vuelva a habilitar el timer
+			}
+		}
+		if ((wf._instruccion==2)&&(wf._ticks2 > 20500)) //if (wf._ticks > 5000)
+		{
+			ESP_timeout=1;
+			if(huart1.Instance->CR1 == 0x200C)  //--------------------Evito error UART colgado
+			{
+				HAL_UART_Receive_IT(&huart1,(uint8_t *)UART_RX_byte,1);
+				FLAG_UART1_WF=0; //OBS-VER Para que me vuelva a habilitar el timer
+			}
+		}
+
+	}
+	else
+	{
+		wf._ticks=0;
+	}
   /* USER CODE END SysTick_IRQn 1 */
 }
 
@@ -1520,6 +1631,48 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *ERRUART)
 		 HAL_UART_Receive_IT(ERRUART,(uint8_t *)UART6_RX_byte,1);
 	}
 
+}
+
+
+
+int ESP8266_HW_Init(UART_HandleTypeDef *SerialPort) //Devuelve 1 si reinició OK, y 0 si no
+{
+	do{
+		  HAL_UART_Transmit(SerialPort, "AT+RESTORE\r\n",12,100);
+		  HAL_Delay(500);
+		  wf._n_fcomp=5;			//Cdad de elementos del vector a analizar
+		  wf._n_orig=UART_RX_items;
+		  while(FT_String_ND(UART_RX_vect_hld,&wf._n_orig,"ready",&wf._n_fcomp,wf._uartRCVD_tok,&wf._n_tok,&wf._n_fcomp,&wf._id_conn,&wf._overflowVector,FIND)!=1)
+		  {
+			  wf._n_orig=UART_RX_items;
+				  if (ESP_ticks>=5000)
+					 {
+						 ESP_InitF=1;
+						 break;
+					 }
+		  }
+
+		  if (ESP_ticks<5000)
+		  {
+			  ESP_REinit=10;	//Condición de salida
+			  ESP_ticks=0;
+		  }
+		  else
+		  {
+			  ESP_REinit++;		//Conteo de la cantidad de veces que se reinicia el ciclo
+			  ESP_ticks=0;
+		  }
+
+	 } while (ESP_REinit<=5);
+
+	  if(ESP_REinit==10)
+	  {
+		  return(1);
+	  }
+	  else
+	  {
+		  return(0);
+	  }
 }
 
 int ITM0_Write( char *ptr, int len)
