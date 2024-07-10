@@ -81,67 +81,15 @@ int		mseg=0, //conteo de milisegundos
 	   	ms_ticks=0,
 	   	min_ticks=0,
 		MB_TOUT_ticks=0,
-		ESP_ticks=0;
+		ESP_ticks=0,
+		wf_snd_flag_ticks=0,
+		WF_SND_FLAG=0;
 
 char EP_DATA[]="/logdata",//ENDPOINT[]="/tepelco",
 	 EP_ERROR[]="/logerror",
-	 EP_APROV[]="/arovisionamiento",
+	 EP_APROV[]="/aprovisionamiento",
 	 EP_[]="/logdata";
-/*
-char 	WIFI_NET[]="PLC_DEV_CON_TI",					//WIFI_NET[]="Fibertel WiFi967 2.4GHz",//WIFI_NET[]="PLC_DEV",//
-		WIFI_PASS[]="123456789",					//WIFI_PASS[]="0042880756",//WIFI_PASS[]="12345678",//
-		WIFI__IP[]="192.168.0.33",
-		WIFI_MASK[]="255.255.255.0",
 
-		EP_SERVER[]="192.168.0.91",			//TCP_SERVER[]="192.168.0.65",//TCP_SERVER[]="192.168.0.102",//TCP_SERVER[]="192.168.0.47",
-		EP_PORT[]="8000",						//TCP_PORT[]="502",
-
-		TCP_SERVER_LOCAL[]="192.168.5.2",		//TCP_SERVER[]="192.168.0.47",
-		TCP_SERVER_LOCAL_GWY[]="192.168.5.1",	//TCP_SERVER[]="192.168.0.47",
-		TCP_SERVER_LOCAL_MSK[]="255.255.255.0",	//TCP_SERVER[]="192.168.0.47",
-		TCP_PORT_LOCAL[]="8000",
-
-		ETHERNET_IP[]="192.168.0.44",
-		ETHERNET_TRGT_IP[]="192.168.0.3",
-		ETHERNET_MASK[]="255.255.255.0",
-		ETHERNET_PORT[]="502",
-
-		LORA_ADDR[]="3",
-		LORA_NET_ID[]="1",
-		LORA_NCPIN[]="3",
-		LORA_BAND[]="55",
-
-		MBUS_REG[]="16",
-		MBUS_ID[]="1",
-		MBUS_CODE[]="4",
-		MBUS_SRVR[]="2",
-
-
-		READ_FUNCTION_1[16],
-		READ_FUNCTION_2[16],
-		READ_FUNCTION_3[16],
-		READ_FUNCTION_4[16],
-		READ_FUNCTION_5[16],
-		READ_FUNCTION_6[16],
-		READ_FUNCTION_7[16],
-		READ_FUNCTION_8[16],
-		READ_FUNCTION_9[16],
-		READ_FUNCTION_10[16],
-		READ_FUNCTION_11[16],
-		READ_FUNCTION_12[16],
-		READ_FUNCTION_13[16],
-		READ_FUNCTION_14[16],
-		READ_FUNCTION_15[16],
-		READ_FUNCTION_16[16],
-
-		READ_HLF_FUNC_1[8],
-		READ_HLF_FUNC_2[8];*/
-
-/*char post[512];
-char body[512];
-char ENDPOINT[]="/logdata",//ENDPOINT[]="/tepelco",
-     SERVER_IP[]="192.168.0.91",
-     PORT[]="8000";*/
 uint16_t 	S0_get_size = 0,
 			tx_mem_pointer=0,
 			rx_mem_pointer=0,
@@ -181,6 +129,8 @@ char	UART_RX_vect[4096],//UART_RX_vect[1024],
 		UART6_RX_byte[2],
 		APWFUID[65],
 		dummyArray[20],
+		post[512],
+		body[512],
 
     	WEB_Salida[]="<!DOCTYPE html><html><body><h2>Datos salvados</h2></body></html>\r\n",
 
@@ -221,6 +171,12 @@ int 	dummy=0,
 		UART_RX_pos=0,
 		UART2_RX_pos=0,
 		UART6_RX_pos=0;
+
+enum {
+	TEPELCO,
+	TEST_1,
+	TEST_2
+};
 
 /* USER CODE END PV */
 
@@ -448,17 +404,17 @@ int main(void)
 					  {
 						  //------------------------ PAGINA WEB ------------------------ //
 						  HAL_UART_Transmit(&huart1, "AT+CIPSEND=0,856\r\n", strlen("AT+CIPSEND=0,856\r\n"), 100);
-						  HAL_Delay(100);
+						  HAL_Delay(300);
 						  HAL_UART_Transmit(&huart1, WEB_Inicio_1, strlen(WEB_Inicio_1), 100);
-						  HAL_Delay(100);
+						  HAL_Delay(300);
 						  HAL_UART_Transmit(&huart1, "AT+CIPSEND=0,935\r\n", strlen("AT+CIPSEND=0,935\r\n"), 100);
-						  HAL_Delay(100);
+						  HAL_Delay(300);
 						  HAL_UART_Transmit(&huart1, WEB_Inicio_2, strlen(WEB_Inicio_2), 100);
-						  HAL_Delay(100);
+						  HAL_Delay(300);
 						  HAL_UART_Transmit(&huart1, "AT+CIPSEND=0,861\r\n", strlen("AT+CIPSEND=0,861\r\n"), 100);
-						  HAL_Delay(100);
+						  HAL_Delay(300);
 						  HAL_UART_Transmit(&huart1, WEB_Inicio_3, strlen(WEB_Inicio_3), 100);
-						  HAL_Delay(100);
+						  HAL_Delay(300);
 						  HAL_UART_Transmit(&huart1, "AT+CIPCLOSE=0\r\n", strlen("AT+CIPCLOSE=0\r\n"), 100);
 						  HAL_Delay(10);
 						  //------------------------ PAGINA WEB ------------------------ //
@@ -508,7 +464,7 @@ int main(void)
 	strcpy(wf._TCP_Local_Server_Port, TCP_PORT_LOCAL);*/
 	wf._TCP_Local_Server_EN=0;							//Habilito el Servidor Local
 	wf._estado_conexion=100;//Si no se define no arranca	//wf._estado_conexion=1;					//Arranco en WiFi Desconectado
-	wf._automatizacion=WF_CONNECT_TCP;//wf._automatizacion=WF_SEND;
+	wf._automatizacion=WF_CONNECT_TCP;//wf._automatizacion=WF_SEND;//
 	wf._NO_IP=1;
 	wf._DBG_EN=1;
 
@@ -558,26 +514,83 @@ int main(void)
 			ITM0_Write("\r\nESP8266 Restart",strlen("\r\nESP8266 Restart"));
 		}
 
+	 if (ESP_HW_Init==1) //Si el módulo se inició correctamente
+		{
+			if((WF_SND_FLAG==1)&&(wf._TCP_Local_Server_EN==0)&&(wf._estado_conexion>=609)&&(ETH.S0_data_available))
+			{	ETH.S0_data_available=0;
+				wf_snd_flag_ticks=0;
+				WF_SND_FLAG=0;
+				if( httpPOST(	EP_DATA, NVS._SERVER,NVS._WIFI_PORT,
+								ModBUS_F03_Read(&mb_eth,0),
+								ModBUS_F03_Read(&mb_eth,1),
+								ModBUS_F03_Read(&mb_eth,2),
+								ModBUS_F03_Read(&mb_eth,3),
+								ModBUS_F03_Read(&mb_eth,4),
+								ModBUS_F03_Read(&mb_eth,5),
+								ModBUS_F03_Read(&mb_eth,6),
+								ModBUS_F03_Read(&mb_eth,7),
+								ModBUS_F03_Read(&mb_eth,8),
+								ModBUS_F03_Read(&mb_eth,9),
+								0,0,0,0,0,0,TEPELCO,post, body, 512) )
+				{
+							CopiaVector(wf._data2SND,post,strlen(post),0,'A');
+							wf._n_D2SND=strlen(post);
+							if(wf._automatizacion < WF_SEND)		// Send only with automation sent diasabled
+							{
+								EnviarDatos(&wf);
+								wf._estado_conexion=TCP_SND_EN_CURSO;
+							}
+				}
+			}
+		}
+
 	  if((FLAG_UART1_WF==1)||(ESP_timeout==1))
 		  {
-		  	  if(ESP_timeout==1)
-		  	  {
-		  		ESP_timeout=0;
-		  	  }
+			  if(ESP_timeout==1)
+			  {
+				ESP_timeout=0;
+			  }
+			if(FLAG_UART1_WF==1)
+				{
+					CopiaVector(wf._uartRCVD,UART_RX_vect_hld,UART_RX_items,1,CMP_VECT);
+					FLAG_UART1_WF=0;
+				}
+
 			  ITM0_Write("\r\nRX UART1",strlen("\r\nRX UART1"));
-			  wf._n_orig=UART_RX_items;
-			  CopiaVector(wf._uartRCVD,UART_RX_vect_hld,UART_RX_items,1,CMP_VECT);
+
 			  if (ESP_HW_Init==1) //Si el módulo se inició correctamente
 				{
-				  ESP_conn=AT_ESP8266_ND(&wf);
+					  /*************** Copio y proceso info recibida ***************/
+					  wf._n_orig=UART_RX_items;
+					  CopiaVector(wf._uartRCVD,UART_RX_vect_hld,UART_RX_items,1,CMP_VECT);
+					  ESP_conn=AT_ESP8266_ND(&wf);
+
+					/*************** Si recibo datos y estan correctos me fijo que son ***************/
+
+					if ((wf._new_data_rcv==1)&&(wf._estado_rcv_data==99))
+					{
+
+						CopiaVector(mb_wf._MBUS_RCVD,wf._dataRCV,wf._n_dataRCV,0,'A');
+						mb_wf._n_MBUS_RCVD=wf._n_dataRCV;
+
+						ModBUS(&mb_wf);
+
+						CopiaVector(wf._data2SND,mb_wf._MBUS_2SND,mb_wf._n_MBUS_2SND,0,'A');
+						wf._n_D2SND=mb_wf._n_MBUS_2SND;
+						wf._new_data_rcv=0;//
+						wf._send_data=1;
+					}else
+						{
+							// DATA ERRONEA NO SE PROCESA
+						}
 				}
+
 			  FLAG_UART1_WF=0;
 		  }
 	  if (ESP_HW_Init==1) //Si el módulo se inició correctamente
 		{
 			ESP_conn=WiFi_Conn_ND(&wf,&huart1,1);	//Tiene que ir en el main el chequeo es constante
 		}
-
 
 	  if(FLAG_UART2_485==1)
 	  {
@@ -1178,7 +1191,26 @@ void SysTick_Handler(void)
 			mb_eth._w_answer=0;
 			MB_TOUT_ticks=0;
 		}
+	// ENVIO DATOS WF ---------------------------------------------------------------//
 
+		if((wf._estado_conexion==609 || wf._estado_conexion==700)&&(wf._TCP_Local_Server_EN==0))  wf_snd_flag_ticks++;
+
+		if(wf_snd_flag_ticks>=4000 && wf._ejecucion!=1 && wf._TCP_Local_Server_EN==0)
+			{
+			WF_SND_FLAG=1;		//Envío de datos cada 20 segs
+			}
+
+	// ENVIO DATOS WF ----------------------------------- ---------------------------//
+
+	/**********************[ INICIO - EHTERNET WDG ] **********************/
+
+		if(ETH.S0_status == 0)
+		{
+			ETH.ETH_WDG++;
+			if (ETH.ETH_WDG>=64000) ETH.ETH_WDG=64000;		//Si alcanza valor límite lo dejo en 64000
+		}
+
+	/**********************[ FIN 	- EHTERNET WDG ] **********************/
    if (ms_ticks==300)
      {
    	ms_ticks=0;
