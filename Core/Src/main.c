@@ -174,8 +174,23 @@ int 	dummy=0,
 
 enum {
 	TEPELCO,
-	TEST_1,
-	TEST_2
+	EFLUENTES,
+	SANDBOX,
+	PSEUDO,
+	ESP3,
+	ESP1,
+	ESP2TH,
+	POWERMETER,
+	DISPONIBLE1,
+	DISPONIBLE2,
+	DISPONIBLE3,
+	DISPONIBLE4,
+	DISPONIBLE5,
+	DISPONIBLE6,
+	DISPONIBLE7,
+	DISPONIBLE8,
+	DISPONIBLE9,
+	DISPONIBLE10
 };
 
 /* USER CODE END PV */
@@ -531,7 +546,13 @@ int main(void)
 								ModBUS_F03_Read(&mb_eth,7),
 								ModBUS_F03_Read(&mb_eth,8),
 								ModBUS_F03_Read(&mb_eth,9),
-								0,0,0,0,0,0,TEPELCO,post, body, 512) )
+								ModBUS_F03_Read(&mb_eth,10),
+								ModBUS_F03_Read(&mb_eth,11),
+								ModBUS_F03_Read(&mb_eth,12),
+								ModBUS_F03_Read(&mb_eth,13),
+								ModBUS_F03_Read(&mb_eth,14),
+								ModBUS_F03_Read(&mb_eth,15),
+								SANDBOX,post, body, 512))
 				{
 							CopiaVector(wf._data2SND,post,strlen(post),0,'A');
 							wf._n_D2SND=strlen(post);
